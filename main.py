@@ -2,6 +2,8 @@ import pygame
 import pygame.freetype
 from pygame.locals import *
 import scenes
+from uuid import uuid5
+
 
 pygame.init()
 
@@ -23,6 +25,7 @@ class Manager:
         self.screen = pygame.display.set_mode(self.rect.size)
         self.current = None
 
+        self.uuid = uuid5() # used to identify clients
         self.username = 'dev' # so we can skip the Username scene
 
         pygame.key.set_repeat(300, 50)

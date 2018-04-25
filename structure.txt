@@ -61,8 +61,8 @@ Start client
 
 Start server as host
     Start server
-    Pass current client detail to server (record as owner)
-    Wait for player to send request (a UserInfo)
+    Pass current client detail to server through parameter (record as owner)
+    Wait for client to send request (a UserInfo)
         Display request on GUI
             No:
                 Send string "rejected"
