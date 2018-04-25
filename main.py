@@ -18,7 +18,7 @@ class Manager:
         self.fancyfont = pygame.freetype.Font('media/fonts/sigmar.ttf')
         self.fancyfont.origin = True
         self.fancyfont.fgcolor = 200, 200, 200
-        self.fancyfont.size = 30
+        self.fancyfont.size = 25
 
         self.screen = pygame.display.set_mode(self.rect.size)
         self.current = None
@@ -44,7 +44,7 @@ class Manager:
         pygame.display.flip()
 
 manager = Manager()
-manager.focus("Menu")
+manager.focus("Username")
 
 going = True
 while going:

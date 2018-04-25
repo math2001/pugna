@@ -28,7 +28,8 @@ class TextBox:
         opt.margin = 10, 10
         opt.style = pygame.freetype.STYLE_DEFAULT
         opt.fontsize = 20
-        opt.size = 200, font.get_sized_height(getattr(user_opt, 'fontsize', opt.fontsize)) + 10
+        opt.size = 200, font.get_sized_height(getattr(user_opt, 'fontsize',
+                                                      opt.fontsize)) + 10
         opt.thickness = 1
         opt.update(user_opt)
 
@@ -83,8 +84,9 @@ class Button(pygame.sprite.Sprite):
         opt.size = 200, 50
         opt.update(user_opt)
 
-        self.image = pygame.Surface((opt.size[0] + opt.thickness,
-                                     opt.size[1] + opt.thickness))
+        self.image = pygame.Surface((
+            opt.size[0] + opt.thickness + opt.margin[0],
+            opt.size[1] + opt.thickness + opt.margin[1]))
         self.rect = self.image.get_rect()
 
         pygame.draw.rect(self.image, opt.bordercolor,

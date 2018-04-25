@@ -4,7 +4,7 @@ from utils.gui import TextBox, Options
 class Username:
     def on_focus(self, manager):
         self.m = manager
-        self.textbox = TextBox(manager.uifont, Options(thickness=1))
+        self.textbox = TextBox(manager.uifont)
         self.textbox.focused = True
 
     def event(self, e):
