@@ -66,12 +66,18 @@ class TextBox:
                             size=self.opt.fontsize)
         return surface, rect
 
-class Button(pygame.sprite.Sprite):
+    def __str__(self):
+        return '<TextBox text={!r}>'.format(self.text)
 
-    '''not working yet'''
+    def __repr__(self):
+        return self.__str__()
+
+class Button(pygame.sprite.Sprite):
 
     def __init__(self, font, text, user_opt):
         pygame.sprite.Sprite.__init__(self)
+
+        self.text = text
 
         opt = Options()
         opt.margin = 3, 5
@@ -103,3 +109,8 @@ class Button(pygame.sprite.Sprite):
         return e.type == MOUSEBUTTONDOWN and e.button == 1 \
                 and self.rect.collidepoint(e.pos)
 
+    def __str__(self):
+        return '<Button text={!r}>'.format(self.text)
+
+    def __repr__(self):
+        return self.__str__()
