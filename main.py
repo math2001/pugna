@@ -28,7 +28,10 @@ class Manager:
         pygame.key.set_repeat(300, 50)
 
     def focus(self, scene):
-        scene = getattr(scenes, scene)()
+        try:
+            scene = getattr(scenes, scene)()
+        except AttributeError:
+            raise ValueError("No such scene as {!r}".format(scene))
         getattr(self.current, 'on_blur', lambda: None)()
         self.current = scene
         scene.on_focus(self)
@@ -44,7 +47,7 @@ class Manager:
         pygame.display.flip()
 
 manager = Manager()
-manager.focus("Username")
+manager.focus("Menu")
 
 going = True
 while going:
