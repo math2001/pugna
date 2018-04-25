@@ -8,7 +8,10 @@ class Options(dict):
         self.update(kwargs)
 
     def __getattr__(self, attr):
-        return self[attr]
+        try:
+            return self[attr]
+        except KeyError:
+            raise AttributeError("No attribute %s" % attr)
 
     def __setattr__(self, attr, value):
         self[attr] = value
@@ -25,8 +28,7 @@ class TextBox:
         opt.margin = 10, 10
         opt.style = pygame.freetype.STYLE_DEFAULT
         opt.fontsize = 20
-        opt.size = 200, font.get_sized_height(getattr(user_opt, 'fontsize',
-                                                      opt.fontsize)) + 10
+        opt.size = 200, font.get_sized_height(getattr(user_opt, 'fontsize', opt.fontsize)) + 10
         opt.thickness = 1
         opt.update(user_opt)
 
@@ -43,7 +45,9 @@ class TextBox:
             if e.unicode == '\x08':
                 if len(self.text) > 0:
                     self.text = self.text[:-1]
-            elif e.unicode != '\r':
+            elif e.unicode == '\r':
+                return True
+            else:
                 self.text += e.unicode
 
     def render(self):
@@ -52,8 +56,8 @@ class TextBox:
         rect = surface.get_rect()
         bordercolor = self.opt.bordercolor if self.focused \
                       else self.opt.focusedbordercolor
-        pygame.draw.rect(surface, bordercolor, rect,
-                         self.opt.thickness)
+        pygame.draw.rect(surface, bordercolor, rect.inflate(-self.opt.thickness,
+            -self.opt.thickness), self.opt.thickness)
         origin = (rect.left + self.opt.margin[0],
                  rect.bottom - self.opt.margin[1])
         self.font.render_to(surface, origin, self.text,
@@ -65,27 +69,35 @@ class Button(pygame.sprite.Sprite):
 
     '''not working yet'''
 
-    def __init__(self, font, text, onclick, opt):
+    def __init__(self, font, text, user_opt):
         pygame.sprite.Sprite.__init__(self)
 
-        default_opt = Options()
-        default_opt.margin = 3, 5
-        default_opt.thickness = 1
-        default_opt.bordercolor = 33, 33, 33
-        default_opt.fgcolor = 33, 33, 33
-        default_opt.bgcolor = None
-        default_opt.style = STYLE_DEFAULT
-        opt = default_opt.update(opt)
+        opt = Options()
+        opt.margin = 3, 5
+        opt.thickness = 1
+        opt.bordercolor = 33, 33, 33
+        opt.fgcolor = font.fgcolor
+        opt.bgcolor = None
+        opt.fontsize = font.size
+        opt.style = pygame.freetype.STYLE_DEFAULT
+        opt.size = 200, 50
+        opt.update(user_opt)
 
-        self.rect = font.get_size(text).inflate(opt.margin[0] + opt.thickness, opt.margin[1] + opt.thickness)
-        self.image = pygame.Surface(self.rect)
-        pygame.draw.rect(self.image, opt.bordercolor, self.rect.inflate(-opt.thickness, -opt.thickness), opt.thickness)
+        self.image = pygame.Surface((opt.size[0] + opt.thickness,
+                                     opt.size[1] + opt.thickness))
+        self.rect = self.image.get_rect()
 
-        surface, rect = font.render(text, opt.fgcolor, opt.bgcolor, opt.style)
-        rect.center = self.rect.center
-        self.image.blit(surface, rect)
+        pygame.draw.rect(self.image, opt.bordercolor,
+                         self.rect.inflate(-opt.thickness,
+                                           -opt.thickness),
+                         opt.thickness)
+
+        s, r = font.render(text, opt.fgcolor, opt.bgcolor,
+                                opt.style, size=opt.fontsize)
+        r.center = self.rect.center
+        self.image.blit(s, r)
 
     def mouseevent(self, e):
-        if e.type == MOUSEBUTTONDOWN and e.button == 1 and self.rect.collidepoint(e.pos):
-            self.onclick()
+        return e.type == MOUSEBUTTONDOWN and e.button == 1 \
+                and self.rect.collidepoint(e.pos)
 

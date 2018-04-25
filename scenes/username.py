@@ -3,16 +3,22 @@ from utils.gui import TextBox, Options
 
 class Username:
     def on_focus(self, manager):
-        self.textbox = TextBox(manager.uifont)
+        self.m = manager
+        self.textbox = TextBox(manager.uifont, Options(thickness=1))
         self.textbox.focused = True
 
     def event(self, e):
-        self.textbox.event(e)
+        if self.textbox.event(e) is True:
+            # TODO: validate username
+            self.m.username = self.textbox.text
+            self.m.focus("Menu")
 
-    def update(self):
-        pass
-
-    def render(self, screen, rect):
+    def render(self):
         textbox, txtrect = self.textbox.render()
-        txtrect.center = rect.center
-        screen.blit(textbox, txtrect)
+        txtrect.center = self.m.rect.center
+
+        s, r = self.m.uifont.render("Enter your username and press enter")
+        r.midbottom = txtrect.midtop
+        r.bottom -= 10
+        self.m.screen.blit(s, r)
+        self.m.screen.blit(textbox, txtrect)
