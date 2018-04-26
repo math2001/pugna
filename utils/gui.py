@@ -10,6 +10,25 @@ def origin(font, enabled):
     yield font
     font.origin = default
 
+def word_wrap(surf, text, font, opt):
+    """Stolen from the pygame documentation freetype.Font.render_to"""
+    font.origin = True
+    words = text.split(' ')
+    width, height = surf.get_size()
+    line_spacing = font.get_sized_height() + 2
+    x, y = 0, line_spacing
+    space = font.get_rect(' ')
+    for word in words:
+        bounds = font.get_rect(word)
+        if x + bounds.width + bounds.x >= width:
+            x, y = 0, y + line_spacing
+        if x + bounds.width + bounds.x >= width:
+            raise ValueError("word too wide for the surface")
+        if y + bounds.height - bounds.y >= height:
+            raise ValueError("text to long for the surface")
+        font.render_to(surf, (x, y), opt.bgcolor, opt.fgcolor)
+        x += bounds.width + space.width
+    return x, y
 
 class Options(dict):
 
@@ -88,6 +107,10 @@ class Button(pygame.sprite.Sprite):
     the margin for that specific option isn't taken into account, and the
     border are drawn *inside* the button (so that the actually button size
     is the size you wanted)
+    Make sure you put the rect (btn.rect) where you want it and render it!
+    (s.blit(btn.image, btn.rect) or with pygame.sprite.Sprite)
+    Call event() with the an Event, and it'll return True if the user clicked
+    on it.
     """
 
     def __init__(self, font, text, useropt={}):
@@ -139,13 +162,62 @@ class Button(pygame.sprite.Sprite):
 
 class ConfirmBox:
 
-    def __init__(self, title, ok, cancel):
-        self.title = title
+    """Creates a little popup
+    Place the cb.rect where you want it and render with s.blit(cb.image, cb.rect)
+    Call event() with an Event and it'll return True if the user cliked ok and 
+    return False if the user clicked cancel
+    """
+
+    @classmethod
+    def new(cls, font, title, ok, cancel, useropt={}):
+        """A shortcut to automatically create the buttons from text"""
+        return cls(font, title, Button(font, ok), Button(font, cancel), useropt)
+
+    def __init__(self, font, title, ok, cancel, useropt={}):
         self.ok = ok
         self.cancel = cancel
 
+        opt = Options()
+        opt.width = 350
+        opt.height = 150
+        opt.thickness = 1
+        opt.bordercolor = 33, 33, 33
+        opt.bgcolor = None
+        opt.fgcolor = font.fgcolor
+        opt.margin = 20, 20
+        opt.update(useropt)
+
+        self.image = pygame.Surface((opt.width, opt.height))
+        self.rect = self.image.get_rect()
+        if opt.bgcolor:
+            self.image.fill(opt.bgcolor)
+
+        text = pygame.Surface((opt.width - opt.margin[0] * 2,
+                               opt.height - opt.margin[1] * 2))
+        word_wrap(text, title, font, opt)
+        self.image.blit(text, opt.margin)
+
+        pygame.draw.rect(self.image, opt.bordercolor,
+                         self.rect.inflate(-opt.thickness * 2, -opt.thickness * 2),
+                         opt.thickness)
+
+        ok.rect.bottomright = pygame.math.Vector2(self.rect.bottomright) \
+                              - pygame.math.Vector2(opt.margin)
+        self.image.blit(ok.image, ok.rect)
+
+        cancel.rect.midright = ok.rect.midleft
+        cancel.rect.left -= 10
+        self.image.blit(cancel.image, cancel.rect)
+
+    def event(self, e):
+        if e.type == MOUSEBUTTONDOWN:
+            if self.ok.event(e):
+                return True
+            if self.cancel.event(e):
+                return False
+
     def __str__(self):
-        return "<ConfirmBox {!r}>".format(self.title)
+        return f"<ConfirmBox {self.title!r}>"
 
     def __repr__(self):
         return self.__str__()

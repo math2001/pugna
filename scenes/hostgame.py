@@ -65,6 +65,7 @@ class HostGame:
 
         self.listener = self.m.loop.create_task(self.listen_for_request())
 
+
     async def on_blur(self):
         l.debug("Stop listening for requests")
         await self.server.close()
@@ -84,8 +85,9 @@ class HostGame:
         self.request = Request(uuid, username)
         self.state = 'got request from player'
 
-        self.confirmbox = ConfirmBox(f"{username} wants to play with you!",
-                                     "Accept!", "Na...")
+        self.confirmbox = ConfirmBox.new(f"{username} wants to play with you!",
+                                        "Accept!", "Na...")
+        self.confirmbox.rect.center = self.m.rect.center
 
     def setstate(self, newvalue):
         l.info("Change state to {!r}".format(newvalue))
@@ -135,6 +137,6 @@ class HostGame:
             dr.topleft = r.topright
             self.m.uifont.render_to(self.m.screen, dr, None)
 
-        elif self.confirmbox:
-            self.confirmbox.render()
+        if self.confirmbox:
+            self.m.screen.blit(self.confirmbox.image, self.confirmbox.rect)
 
