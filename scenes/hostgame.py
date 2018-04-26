@@ -46,6 +46,8 @@ class HostGame:
 
         self.state = 'waiting for other player'
 
+        self.animdots = 0
+
     def setstate(self, newvalue):
         l.info("Change state to {!r}".format(newvalue))
         self._state = newvalue
@@ -74,9 +76,18 @@ class HostGame:
 
         top = r.bottom + 130
 
+        if self.m.frames_count % 20 == 0:
+            self.animdots += 1
+            if self.animdots == 4:
+                self.animdots = 0
+
         if self.state == 'waiting for other player':
+            self.m.uifont.origin = True
             r = self.m.uifont.get_rect("Waiting for an other player to join")
             r.midtop = self.m.rect.centerx, top
             self.m.uifont.render_to(self.m.screen, r, None)
 
+            dr = self.m.uifont.get_rect('.' * self.animdots)
+            dr.topleft = r.topright
+            self.m.uifont.render_to(self.m.screen, dr, None)
 
