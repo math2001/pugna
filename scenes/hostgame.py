@@ -72,4 +72,11 @@ class HostGame:
         r.centerx, r.top = self.m.rect.centerx, top
         self.m.uifont.render_to(self.m.screen, r, None, size=size)
 
+        top = r.bottom + 130
+
+        if self.state == 'waiting for other player':
+            r = self.m.uifont.get_rect("Waiting for an other player to join")
+            r.midtop = self.m.rect.centerx, top
+            self.m.uifont.render_to(self.m.screen, r, None)
+
 
