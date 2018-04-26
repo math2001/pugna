@@ -2,10 +2,13 @@ import pygame
 from utils.gui import TextBox, Options
 
 class Username:
+
     def on_focus(self, manager):
         self.m = manager
         self.textbox = TextBox(manager.uifont)
         self.textbox.focused = True
+
+        self.m.uifont.origin = True
 
     def event(self, e):
         if self.textbox.event(e) is True:
@@ -22,3 +25,6 @@ class Username:
         r.bottom -= 10
         self.m.screen.blit(s, r)
         self.m.screen.blit(textbox, txtrect)
+
+    def on_blur(self):
+        self.m.uifont.origin = False
