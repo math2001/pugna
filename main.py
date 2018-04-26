@@ -49,9 +49,14 @@ class Manager:
 
         self.focusing_scene = False
 
+        # used for communicating with server
+        self.writer = None
+        self.reader = None
+
         pygame.key.set_repeat(300, 50)
 
     async def focus(self, scene):
+        scene = scene.title().replace(' ', '')
         try:
             scene = getattr(scenes, scene)()
         except AttributeError:

@@ -25,7 +25,7 @@ class Menu:
         if e.type == pygame.MOUSEBUTTONDOWN:
             for btn in self.buttonsprites.sprites():
                 if btn.mouseevent(e):
-                    await self.m.focus(btn.text.title().replace(' ', ''))
+                    await self.m.focus(btn.text)
 
 
     async def render(self):

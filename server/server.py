@@ -61,7 +61,7 @@ class Server:
                 self.clients[uuid] = Client(username, reader, writer)
             else:
                 self.state = 'waiting for player'
-                await write(writer, "declined request.")
+                await write(writer, "declined")
 
         # here, state must be 'waiting for owner'
         if uuid == self.owneruuid:

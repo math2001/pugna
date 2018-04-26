@@ -53,9 +53,9 @@ class HostGame:
         self.state = 'waiting for other player'
         self.request = None
 
-        self.listen_for_request()
-
         self.animdots = 0
+
+        self.listen_for_request()
 
     async def listen_for_request(self):
         l.info("Awating for request...")
@@ -73,7 +73,7 @@ class HostGame:
     async def render(self):
         top = 50
         size = 60
-        r = self.m.fancyfont.get_rect("Hosting a game...", size=size)
+        r = self.m.fancyfont.get_rect("Host a game", size=size)
         r.midtop = self.m.rect.centerx, top
         self.m.fancyfont.render_to(self.m.screen, r, None, size=size)
 
