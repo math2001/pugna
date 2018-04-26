@@ -108,7 +108,7 @@ class HostGame:
                 response = await readline(self.reader)
                 l.debug(f"Got response from server {response!r}")
                 if response == 'select champion':
-                    await self.m.focus("SelectChampion")
+                    await self.m.focus("select champion")
                 else:
                     l.critical(f"Got unexpected response {response!r}")
                     raise NotImplementedError("This shouldn't happen")
