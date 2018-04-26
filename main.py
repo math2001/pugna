@@ -9,7 +9,7 @@ from utils.gui import Button
 import scenes
 from uuid import uuid4
 
-logging.basicConfig(level=logging.DEBUG, format='{asctime} {levelname:<5} {name} {message}', style='{')
+logging.basicConfig(level=logging.INFO, format='{asctime} {levelname:<5} {name} {message}', style='{')
 
 l = logging.getLogger(__name__)
 
@@ -99,6 +99,8 @@ class Manager:
             await self.current.render()
             if getattr(self.current, 'menubtn', True):
                 self.screen.blit(self.menubtn.image, self.menubtn.rect)
+            # give control back to the event loop, so that other tasks can run
+            await asyncio.sleep(0)
             pygame.display.flip()
 
 os.environ["SDL_VIDEO_CENTERED"] = "1"

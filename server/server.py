@@ -15,14 +15,18 @@ class Server:
     def __init__(self, owneruuid, ownerusername):
         self.owneruuid = owneruuid
         self.clients = {}
+        self._state = 'closed'
 
     async def start(self, port):
+        l.info("Start server")
         self._state = "waiting for owner"
         self.server = await asyncio.start_server(self.handle_new_client, "", port)
 
     async def close(self):
         self.state = "closed"
-        self.server.cancel()
+        self.server.close()
+        for client in self.clients.values():
+            client.writer.close()
 
     def setstate(self, newvalue):
         l.info("Change state to {!r}".format(newvalue))

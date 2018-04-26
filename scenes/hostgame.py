@@ -25,17 +25,19 @@ class HostGame:
 
         self.animdots = 0
 
-        self.state = "opening connection"
-
         self.server = server.Server(self.m.uuid, self.m.username)
 
-        l.info("Start server")
-        self.m.loop.create_task(self.server.start(PORT))
+        self.state = "creating server"
 
-        self.connection = self.m.loop.create_task(self.connect_to_server())
+        # self.connection = self.m.loop.create_task(self.server.start(PORT))
+        self.connection = await self.server.start(PORT)
+
+        self.state = 'opening connection'
+
+        self.m.loop.create_task(self.connect_to_server())
 
     async def connect_to_server(self):
-        l.info("Open connection with server")
+        l.debug("Open connection with server")
         self.reader, self.writer = await asyncio.open_connection("127.0.0.1", PORT, loop=self.m.loop)
         self.state = "identifying"
 
@@ -54,7 +56,7 @@ class HostGame:
             l.critical("Unexpected answer while "
                        "identifying {!r}".format(answer))
             raise NotImplementedError("Need to have a nice GUI for this")
-        log.info("successful logging as owner with the server")
+        l.debug("successful logging as owner with the server")
 
         self.state = 'waiting for other player'
         self.request = None
@@ -63,8 +65,8 @@ class HostGame:
 
     async def on_blur(self):
         l.debug("Stop listening for requests")
-        self.server.close()
-        self.connection.cancel()
+        await self.server.close()
+        # self.connection.cancel()
         # self.writer.transport.abort()
         # self.writer.close()
         # self.listener.cancel()
@@ -72,7 +74,7 @@ class HostGame:
         # await self.writer.drain()
 
     async def listen_for_request(self):
-        l.info("Awating for request...")
+        l.debug("Awating for request...")
         uuid = await readline(self.reader)
         username = await reader(self.reader)
         self.state = 'got request from player'
