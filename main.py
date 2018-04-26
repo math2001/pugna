@@ -1,9 +1,12 @@
+import os
+import logging
 import pygame
 import pygame.freetype
 from pygame.locals import *
 import scenes
 from uuid import uuid4
 
+logging.basicConfig(level=logging.DEBUG)
 
 pygame.init()
 
@@ -13,12 +16,10 @@ class Manager:
         self.rect = pygame.Rect(0, 0, 800, 600)
 
         self.uifont = pygame.freetype.Font('media/fonts/poorstory.ttf')
-        self.uifont.origin = True
         self.uifont.fgcolor = 150, 150, 150 # real original :D
         self.uifont.size = 20
 
         self.fancyfont = pygame.freetype.Font('media/fonts/sigmar.ttf')
-        self.fancyfont.origin = True
         self.fancyfont.fgcolor = 200, 200, 200
         self.fancyfont.size = 25
 
@@ -48,6 +49,8 @@ class Manager:
         getattr(self.current, 'update', lambda: None)()
         self.current.render()
         pygame.display.flip()
+
+os.environ["SDL_VIDEO_CENTERED"] = "1"
 
 manager = Manager()
 manager.focus("HostGame")

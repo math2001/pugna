@@ -1,18 +1,14 @@
 import asyncio
+import logging
 from collections import namedtuple
+from utils.network import *
+
+l = logging.getLogger(__name__)
 
 Client = namedtuple('Client', 'username playerstatus reader writer')
 
 class PlayerPrivateStatus:
     pass
-
-async def readline(reader):
-    return (await reader.readerline()).decode('utf-8')
-
-async def write(writer, *lines, drain=True):
-    writer.write('\n'.join(lines).encode('utf-8'))
-    if drain:
-        await writer.drain()
 
 class Server:
 
@@ -24,6 +20,10 @@ class Server:
         self.loop = asyncio.get_event_loop()
         self.server = self.loop.run_until_complete(asyncio.start_server(
             self.handle_new_client, "", port))
+
+    def _state(self, newstate):
+        l.debug("Change state to {!r}".format(newstate))
+        self.state = newstate
 
     async def handle_new_client(self, reader, writer):
         """Handle new client depending on the state
@@ -40,35 +40,36 @@ class Server:
         send 'Choose champion' to both the other player and the owner.
         """
 
-        uuid = await readline(reader).strip()
-        username = await readline(reader).strip()
+        uuid = (await readline(reader))
+        username = (await readline(reader))
 
         if self.state == 'waiting for owner response':
             # don't accept any request from players when a request has already
             # been send to the owner
             # So, we tell the player the owner's busy.
-            write(writer, "Owner already requested")
+            write(writer, "owner already requested")
             return
 
         if self.state == "waiting for player":
             # here, the reader and the writer are the other player's, not the
             # owner's
             await write(self.clients[self.owneruuid].writer, uuid, username)
-            self.state = 'waiting for owner response'
+            self._state('waiting for owner response')
             if await readline(self.clients[self.owneruuid].reader) \
-                    == 'Accepted':
+                    == 'accepted':
                 self.clients[uuid] = Client(username, reader, writer)
             else:
-                self.state = 'waiting for player'
-                await write(writer, "Declined request.")
+                self._state('waiting for player')
+                await write(writer, "declined request.")
 
         # here, state must be 'waiting for owner'
         if uuid == self.owneruuid:
             self.clients[uuid] = Client(username, PlayerPrivateStatus(),
                                         reader, writer)
-            self.state = "waiting for player"
+            self._state("waiting for player")
+            await write(writer, "successful identification")
         else:
-            write(writer, "Not owner. Denied.")
+            await write(writer, "not owner. denied.")
             writer.close()
 
     def __str__(self):
