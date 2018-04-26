@@ -81,8 +81,11 @@ class HostGame:
         l.debug(f"Got uuid {uuid!r} from server.")
         username = await readline(self.reader)
         l.debug(f"Got a player request ({username!r})")
-        self.state = 'got request from player'
         self.request = Request(uuid, username)
+        self.state = 'got request from player'
+
+        self.confirmbox = ConfirmBox(f"{username} wants to play with you!",
+                                     "Accept!", "Na...")
 
     def setstate(self, newvalue):
         l.info("Change state to {!r}".format(newvalue))
@@ -110,6 +113,8 @@ class HostGame:
 
         self.m.reset_fonts()
 
+        self.confirmbox = None
+
     async def render(self):
 
         for s, r in self.to_render:
@@ -130,6 +135,6 @@ class HostGame:
             dr.topleft = r.topright
             self.m.uifont.render_to(self.m.screen, dr, None)
 
-        elif self.state == 'got request from player':
-            ConfirmBox(f"{self.request.username} wants to play with you.",
-                       "Accept", "Decline")
+        elif self.confirmbox:
+            self.confirmbox.render()
+
