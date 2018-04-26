@@ -9,6 +9,8 @@ from uuid import uuid4
 
 logging.basicConfig(level=logging.DEBUG)
 
+l = logging.getLogger(__name__)
+
 pygame.init()
 
 class Manager:
@@ -39,6 +41,7 @@ class Manager:
             scene = getattr(scenes, scene)()
         except AttributeError:
             raise ValueError("No such scene as {!r}".format(scene))
+        l.debug("Switch scene to {!r}".format(scene.__class__.__name__))
         getattr(self.current, 'on_blur', lambda: None)()
         self.current = scene
         scene.on_focus(self)
