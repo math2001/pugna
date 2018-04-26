@@ -13,12 +13,16 @@ class PlayerPrivateStatus:
 class Server:
 
     def __init__(self, owneruuid, ownerusername):
-        self._state = "waiting for owner"
         self.owneruuid = owneruuid
         self.clients = {}
 
     async def start(self, port):
+        self._state = "waiting for owner"
         self.server = await asyncio.start_server(self.handle_new_client, "", port)
+
+    async def close(self):
+        self.state = "closed"
+        self.server.cancel()
 
     def setstate(self, newvalue):
         l.info("Change state to {!r}".format(newvalue))

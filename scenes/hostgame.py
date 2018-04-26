@@ -23,14 +23,19 @@ class HostGame:
         self.m = manager
         self.localip = gethostbyname(gethostname())
 
+        self.animdots = 0
+
         self.state = "opening connection"
 
         self.server = server.Server(self.m.uuid, self.m.username)
 
-        l.debug("Start server")
-        await self.server.start(PORT)
+        l.info("Start server")
+        self.m.loop.create_task(self.server.start(PORT))
 
-        l.debug("Open connection with server")
+        self.connection = self.m.loop.create_task(self.connect_to_server())
+
+    async def connect_to_server(self):
+        l.info("Open connection with server")
         self.reader, self.writer = await asyncio.open_connection("127.0.0.1", PORT, loop=self.m.loop)
         self.state = "identifying"
 
@@ -49,13 +54,22 @@ class HostGame:
             l.critical("Unexpected answer while "
                        "identifying {!r}".format(answer))
             raise NotImplementedError("Need to have a nice GUI for this")
+        log.info("successful logging as owner with the server")
 
         self.state = 'waiting for other player'
         self.request = None
 
-        self.animdots = 0
+        # self.listener = self.m.loop.create_task(self.listen_for_request())
 
-        self.listen_for_request()
+    async def on_blur(self):
+        l.debug("Stop listening for requests")
+        self.server.close()
+        self.connection.cancel()
+        # self.writer.transport.abort()
+        # self.writer.close()
+        # self.listener.cancel()
+        # self.writer.write_eof()
+        # await self.writer.drain()
 
     async def listen_for_request(self):
         l.info("Awating for request...")
@@ -69,6 +83,7 @@ class HostGame:
         self._state = newvalue
 
     state = property(lambda self: self._state, setstate)
+
 
     async def render(self):
         top = 50
@@ -110,4 +125,3 @@ class HostGame:
         elif self.state == 'got request from player':
             ConfirmBox("{0} wants to play with you." \
                         .format(self.request.username))
-
