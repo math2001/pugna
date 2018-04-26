@@ -164,9 +164,16 @@ class Button(pygame.sprite.Sprite):
 class ConfirmBox:
 
     """Creates a little popup
-    Place the cb.rect where you want it and render with s.blit(cb.image, cb.rect)
-    Call event() with an Event and it'll return True if the user cliked ok and 
-    return False if the user clicked cancel
+    Place the cb.rect where you want it and render with s.blit(cb.image,
+    cb.rect)
+    Call event() with an Event and it'll return True if the user
+    cliked ok and return False if the user clicked cancel.
+    If you do move the rect, make sure you call calibre() after it,
+    otherwise they will be off (since they are relative to the window)
+    and the click detection won't work properly.
+
+    run pygame.draw.rect(s, (255, 0, 0), cb.ok.rect, 1) to see what I mean
+
     """
 
     @classmethod
