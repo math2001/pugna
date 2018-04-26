@@ -3,7 +3,7 @@ from utils.gui import Button, Options
 
 class Menu:
 
-    def on_focus(self, manager):
+    async def on_focus(self, manager):
         self.m = manager
 
         self.title = self.m.fancyfont.render("PUGNA", size=150)
@@ -21,14 +21,14 @@ class Menu:
             buttons.append(b)
         self.buttonsprites = pygame.sprite.RenderPlain(buttons)
 
-    def event(self, e):
+    async def event(self, e):
         if e.type == pygame.MOUSEBUTTONDOWN:
             for btn in self.buttonsprites.sprites():
                 if btn.mouseevent(e):
-                    self.m.focus(btn.text.title().replace(" ", ""))
+                    await self.m.focus(btn.text.title().replace(' ', ''))
 
 
-    def render(self):
+    async def render(self):
         self.m.screen.blit(*self.title)
         self.buttonsprites.draw(self.m.screen)
 

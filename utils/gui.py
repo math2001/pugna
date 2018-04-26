@@ -114,3 +114,18 @@ class Button(pygame.sprite.Sprite):
 
     def __repr__(self):
         return self.__str__()
+
+
+class ConfirmBox:
+
+    def __init__(self, title, ok, cancel):
+        self.title = title
+        self.ok = ok
+        self.cancel = cancel
+
+    def __str__(self):
+        return "<ConfirmBox {!r}>".format(self.title)
+
+    def __repr__(self):
+        return self.__str__()
+

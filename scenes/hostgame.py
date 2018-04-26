@@ -4,10 +4,14 @@ from socket import gethostbyname, gethostname
 
 import server
 import asyncio
+from collections import namedtuple
 from constants import PORT
 from utils.network import *
+from utils.gui import ConfirmBox
 
 l = logging.getLogger(__name__)
+
+Request = namedtuple("Request", 'uuid username')
 
 class HostGame:
 
@@ -15,28 +19,30 @@ class HostGame:
     class initialized
     """
 
-    def on_focus(self, manager):
+    async def on_focus(self, manager):
         self.m = manager
         self.localip = gethostbyname(gethostname())
 
         self.state = "opening connection"
 
-        self.server = server.Server(self.m.uuid, self.m.username, PORT)
-        self.loop = asyncio.get_event_loop()
+        self.server = server.Server(self.m.uuid, self.m.username)
 
-        self.reader, self.writer = self.loop.run_until_complete(
-            asyncio.open_connection("127.0.0.1", PORT, loop=self.loop))
+        l.debug("Start server")
+        await self.server.start(PORT)
 
+        l.debug("Open connection with server")
+        self.reader, self.writer = await asyncio.open_connection("127.0.0.1", PORT, loop=self.m.loop)
         self.state = "identifying"
+
+        l.debug("Send ids to the server")
 
         # send uuid and username to the server so that he knows we are the
         # owner. We then have a connection established and server can talk to
         # us.
-        self.loop.run_until_complete(write(self.writer, self.m.uuid + '\n'))
-        self.loop.run_until_complete(write(self.writer,
-                                           self.m.username + '\n'))
+        await write(self.writer, self.m.uuid + '\n')
+        await write(self.writer, self.m.username + '\n')
 
-        answer = self.loop.run_until_complete(readline(self.reader))
+        answer = await readline(self.reader)
         if answer != "successful identification":
             # can't be bothered to do that right now since it is very unlikely
             # to happen
@@ -45,8 +51,18 @@ class HostGame:
             raise NotImplementedError("Need to have a nice GUI for this")
 
         self.state = 'waiting for other player'
+        self.request = None
+
+        self.listen_for_request()
 
         self.animdots = 0
+
+    async def listen_for_request(self):
+        l.info("Awating for request...")
+        uuid = await readline(self.reader)
+        username = await reader(self.reader)
+        self.state = 'got request from player'
+        self.request = Request(uuid, username)
 
     def setstate(self, newvalue):
         l.info("Change state to {!r}".format(newvalue))
@@ -54,7 +70,7 @@ class HostGame:
 
     state = property(lambda self: self._state, setstate)
 
-    def render(self):
+    async def render(self):
         top = 50
         size = 60
         r = self.m.fancyfont.get_rect("Hosting a game...", size=size)
@@ -90,4 +106,8 @@ class HostGame:
             dr = self.m.uifont.get_rect('.' * self.animdots)
             dr.topleft = r.topright
             self.m.uifont.render_to(self.m.screen, dr, None)
+
+        elif self.state == 'got request from player':
+            ConfirmBox("{0} wants to play with you." \
+                        .format(self.request.username))
 
