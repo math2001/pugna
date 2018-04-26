@@ -56,28 +56,37 @@ class Server:
             # don't accept any request from players when a request has already
             # been send to the owner
             # So, we tell the player the owner's busy.
+            l.debug("Send owner busy with request.")
             write(writer, "owner already requested")
             return
 
         if self.state == "waiting for player":
             # here, the reader and the writer are the other player's, not the
             # owner's
+            l.debug("Send owner")
+            # send the uuid and username to the owner
             await write(self.clients[self.owneruuid].writer, uuid, username)
             self.state = 'waiting for owner response'
-            if await readline(self.clients[self.owneruuid].reader) \
-                    == 'accepted':
+            # wait for owner to reply
+            response = await readline(self.clients[self.owneruuid].reader) 
+            l.debug(f"Response from owner {response!r}")
+            if response == 'accepted':
                 self.clients[uuid] = Client(username, reader, writer)
             else:
                 self.state = 'waiting for player'
                 await write(writer, "declined")
+            return
 
         # here, state must be 'waiting for owner'
         if uuid == self.owneruuid:
+            l.debug(f"Got owner's infos: {uuid!r} {username!r}")
             self.clients[uuid] = Client(username, PlayerPrivateStatus(),
                                         reader, writer)
             self.state = "waiting for player"
             await write(writer, "successful identification")
         else:
+            l.warning(f"Got fake request pretenting to be owner "
+                       "{uuid!r} {username!r}")
             await write(writer, "not owner. denied.")
             writer.close()
 

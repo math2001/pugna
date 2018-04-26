@@ -46,8 +46,8 @@ class HostGame:
         # send uuid and username to the server so that he knows we are the
         # owner. We then have a connection established and server can talk to
         # us.
-        await write(self.writer, self.m.uuid + '\n')
-        await write(self.writer, self.m.username + '\n')
+        await write(self.writer, self.m.uuid)
+        await write(self.writer, self.m.username)
 
         answer = await readline(self.reader)
         if answer != "successful identification":
@@ -61,7 +61,7 @@ class HostGame:
         self.state = 'waiting for other player'
         self.request = None
 
-        # self.listener = self.m.loop.create_task(self.listen_for_request())
+        self.listener = self.m.loop.create_task(self.listen_for_request())
 
     async def on_blur(self):
         l.debug("Stop listening for requests")
@@ -74,9 +74,9 @@ class HostGame:
         # await self.writer.drain()
 
     async def listen_for_request(self):
-        l.debug("Awating for request...")
         uuid = await readline(self.reader)
         username = await reader(self.reader)
+        l.debug("Got a player request ({})", username)
         self.state = 'got request from player'
         self.request = Request(uuid, username)
 
