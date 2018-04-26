@@ -12,9 +12,8 @@ logging.basicConfig(level=logging.DEBUG)
 
 l = logging.getLogger(__name__)
 
-pygame.init()
-
-focus_lock = asyncio.Lock()
+pygame.display.init()
+pygame.freetype.init()
 
 class Manager:
 
