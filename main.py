@@ -3,6 +3,7 @@ import logging
 import pygame
 import pygame.freetype
 from pygame.locals import *
+from constants import CAPTION
 import scenes
 from uuid import uuid4
 
@@ -25,6 +26,8 @@ class Manager:
 
         self.screen = pygame.display.set_mode(self.rect.size)
         self.current = None
+
+        pygame.display.set_caption(CAPTION)
 
         self.uuid = uuid4().hex # used to identify clients
         self.username = 'dev' + self.uuid[:6] # so we can skip the Username scene
@@ -53,7 +56,7 @@ class Manager:
 os.environ["SDL_VIDEO_CENTERED"] = "1"
 
 manager = Manager()
-manager.focus("HostGame")
+manager.focus("Username")
 
 going = True
 while going:

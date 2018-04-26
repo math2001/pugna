@@ -1,3 +1,3 @@
-TITLE = "PUGNA"
+CAPTION = "Pugna"
 
 PORT  = 9877
