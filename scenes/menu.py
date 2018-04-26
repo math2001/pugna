@@ -12,7 +12,7 @@ class Menu:
         self.title[1].midtop = self.m.rect.midtop
         self.title[1].top += 50
 
-        opts = Options(thickness=0, margin=(10, 10))
+        opts = Options(thickness=0, width=300, height=60)
         buttons = []
         top = self.title[1].bottom + 100
         for s in ['Host game', 'Join game', 'About']:
