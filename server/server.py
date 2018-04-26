@@ -71,7 +71,9 @@ class Server:
             response = await readline(self.clients[self.owneruuid].reader) 
             l.debug(f"Response from owner {response!r}")
             if response == 'accepted':
-                self.clients[uuid] = Client(username, reader, writer)
+                self.clients[uuid] = Client(username, PlayerPrivateStatus(),
+                                            reader, writer)
+                await write(writer, 'accepted')
             else:
                 self.state = 'waiting for player'
                 await write(writer, "declined")

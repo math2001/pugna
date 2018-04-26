@@ -199,7 +199,8 @@ class ConfirmBox:
         self.image.blit(text, opt.margin)
 
         pygame.draw.rect(self.image, opt.bordercolor,
-                         self.rect.inflate(-opt.thickness * 2, -opt.thickness * 2),
+                         self.rect.inflate(-opt.thickness * 2,
+                                            -opt.thickness * 2),
                          opt.thickness)
 
         ok.rect.bottomright = pygame.math.Vector2(self.rect.bottomright) \
@@ -209,6 +210,13 @@ class ConfirmBox:
         cancel.rect.midright = ok.rect.midleft
         cancel.rect.left -= 10
         self.image.blit(cancel.image, cancel.rect)
+
+    def calibre(self):
+        # set button's rect absolute position to be able to detect collsion
+        self.ok.rect.topleft = (self.rect.left + self.ok.rect.left, 
+                                self.rect.top + self.ok.rect.top)
+        self.cancel.rect.topleft = (self.rect.left + self.cancel.rect.left, 
+                                    self.rect.top + self.cancel.rect.top)
 
     def event(self, e):
         if e.type == MOUSEBUTTONDOWN:

@@ -88,6 +88,7 @@ class HostGame:
         self.confirmbox = ConfirmBox.new(self.m.uifont, f"{username} wants to play with you!",
                                         "Accept!", "Na...")
         self.confirmbox.rect.center = self.m.rect.center
+        self.confirmbox.calibre()
 
     def setstate(self, newvalue):
         l.info("Change state to {!r}".format(newvalue))
@@ -96,10 +97,23 @@ class HostGame:
     state = property(lambda self: self._state, setstate)
 
 
+    async def event(self, e):
+        if self.confirmbox:
+            result = self.confirmbox.event(e)
+            if result is True:
+                l.info("Owner accecepted")
+                await write(self.writer, 'accepted')
+                self.confirmbox = None
+            elif result is False:
+                l.info("Owner declined")
+                await write(self.writer, 'declined')
+                self.confirmbox = None
+
+
     def initrender(self):
-        # generate text once and store it. In the render, we just blit the images
-        # on the screen
-        # tr is a reference to self.to_render, so it saves me some typing
+        # generate text once and store it. In the render, we just blit the
+        # images on the screen tr is a reference to self.to_render, so it saves
+        # me some typing
         tr = self.to_render = []
 
         self.m.fancyfont.size = 60
