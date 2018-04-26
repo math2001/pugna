@@ -74,9 +74,11 @@ class HostGame:
         # await self.writer.drain()
 
     async def listen_for_request(self):
+        l.debug("Start listening for requests")
         uuid = await readline(self.reader)
-        username = await reader(self.reader)
-        l.debug("Got a player request ({})", username)
+        l.debug(f"Got uuid {uuid!r} from server.")
+        username = await readline(self.reader)
+        l.debug(f"Got a player request ({username!r})")
         self.state = 'got request from player'
         self.request = Request(uuid, username)
 
@@ -125,5 +127,5 @@ class HostGame:
             self.m.uifont.render_to(self.m.screen, dr, None)
 
         elif self.state == 'got request from player':
-            ConfirmBox("{0} wants to play with you." \
-                        .format(self.request.username))
+            ConfirmBox(f"{self.request.username} wants to play with you.",
+                       "Accept", "Decline")

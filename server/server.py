@@ -61,9 +61,9 @@ class Server:
             return
 
         if self.state == "waiting for player":
-            # here, the reader and the writer are the other player's, not the
-            # owner's
-            l.debug("Send owner")
+            # Here, we have a request from a player to join the onwer
+            # the reader and the writer are the other player's, not the owner's
+            l.debug(f"Send requests infos to owner {uuid!r} {username!r}")
             # send the uuid and username to the owner
             await write(self.clients[self.owneruuid].writer, uuid, username)
             self.state = 'waiting for owner response'

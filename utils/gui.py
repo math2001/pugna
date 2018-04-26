@@ -123,8 +123,6 @@ class ConfirmBox:
         self.ok = ok
         self.cancel = cancel
 
-        raise NotImplementedError("Need to implement joinning first")
-
     def __str__(self):
         return "<ConfirmBox {!r}>".format(self.title)
 
