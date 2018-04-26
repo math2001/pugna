@@ -70,10 +70,15 @@ class Server:
             # wait for owner to reply
             response = await readline(self.clients[self.owneruuid].reader) 
             l.debug(f"Response from owner {response!r}")
+            # he said yes!
             if response == 'accepted':
                 self.clients[uuid] = Client(username, PlayerPrivateStatus(),
                                             reader, writer)
+                # to the client
                 await write(writer, 'accepted')
+                self.state = 'waiting for champion selection'
+                l.info("Broadcast select champion")
+                await self.broadcast('select champion')
             else:
                 self.state = 'waiting for player'
                 await write(writer, "declined")
@@ -91,6 +96,10 @@ class Server:
                        "{uuid!r} {username!r}")
             await write(writer, "not owner. denied.")
             writer.close()
+
+    async def broadcast(self, *lines):
+        for client in self.clients.values():
+            await write(client.writer, *lines)
 
     def __str__(self):
         return "<Server state={}>".format(self.state)

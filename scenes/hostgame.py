@@ -101,9 +101,17 @@ class HostGame:
         if self.confirmbox:
             result = self.confirmbox.event(e)
             if result is True:
-                l.info("Owner accecepted")
+                l.info("Request accecepted")
                 await write(self.writer, 'accepted')
                 self.confirmbox = None
+                self.state = "waiting for server green flag"
+                response = await readline(self.reader)
+                l.debug(f"Got response from server {response!r}")
+                if response == 'select champion':
+                    await self.m.focus("SelectChampion")
+                else:
+                    l.critical(f"Got unexpected response {response!r}")
+                    raise NotImplementedError("This shouldn't happen")
             elif result is False:
                 l.info("Owner declined")
                 await write(self.writer, 'declined')
