@@ -58,6 +58,10 @@ class Manager:
 
         pygame.key.set_repeat(300, 50)
 
+    def reset_fonts(self):
+        self.reset_uifont()
+        self.reset_fancyfont()
+
     def reset_uifont(self):
         self.uifont.fgcolor = 150, 150, 150 # real original :D
         self.uifont.size = 20
@@ -105,6 +109,6 @@ class Manager:
 
 os.environ["SDL_VIDEO_CENTERED"] = "1"
 
-manager = Manager("Username")
+manager = Manager("Host game")
 pygame.quit()
 

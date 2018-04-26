@@ -23,6 +23,8 @@ class HostGame:
         self.m = manager
         self.localip = gethostbyname(gethostname())
 
+        self.initrender()
+
         self.animdots = 0
 
         self.server = server.Server(self.m.uuid, self.m.username)
@@ -89,27 +91,29 @@ class HostGame:
     state = property(lambda self: self._state, setstate)
 
 
+    def initrender(self):
+        # generate text once and store it. In the render, we just blit the images
+        # on the screen
+        # tr is a reference to self.to_render, so it saves me some typing
+        tr = self.to_render = []
+
+        self.m.fancyfont.size = 60
+        tr.append(self.m.fancyfont.render("Host a game"))
+        tr[-1][1].midtop = self.m.rect.centerx, 50
+
+        tr.append(self.m.uifont.render("Your local IP is:"))
+        tr[-1][1].midtop = self.m.rect.centerx, tr[-2][1].bottom + 40
+
+        self.m.uifont.size = 40
+        tr.append(self.m.uifont.render(self.localip))
+        tr[-1][1].midtop = self.m.rect.centerx, tr[-2][1].bottom + 20
+
+        self.m.reset_fonts()
+
     async def render(self):
-        top = 50
-        size = 60
-        r = self.m.fancyfont.get_rect("Host a game", size=size)
-        r.midtop = self.m.rect.centerx, top
-        self.m.fancyfont.render_to(self.m.screen, r, None, size=size)
 
-        top = r.bottom + 40
-
-        r = self.m.uifont.get_rect("Your local IP is:")
-        r.centerx, r.top = self.m.rect.centerx, top
-        self.m.uifont.render_to(self.m.screen, r, None)
-
-        top = r.bottom + 20
-
-        size = 40
-        r = self.m.uifont.get_rect(self.localip, size=size)
-        r.centerx, r.top = self.m.rect.centerx, top
-        self.m.uifont.render_to(self.m.screen, r, None, size=size)
-
-        top = r.bottom + 130
+        for s, r in self.to_render:
+            self.m.screen.blit(s, r)
 
         if self.m.frames_count % 20 == 0:
             self.animdots += 1
