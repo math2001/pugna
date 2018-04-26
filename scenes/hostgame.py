@@ -85,7 +85,7 @@ class HostGame:
         self.request = Request(uuid, username)
         self.state = 'got request from player'
 
-        self.confirmbox = ConfirmBox.new(f"{username} wants to play with you!",
+        self.confirmbox = ConfirmBox.new(self.m.uifont, f"{username} wants to play with you!",
                                         "Accept!", "Na...")
         self.confirmbox.rect.center = self.m.rect.center
 
