@@ -13,7 +13,7 @@ class PlayerPrivateStatus:
 class Server:
 
     def __init__(self, owneruuid, ownerusername, port):
-        self.state = "waiting for owner"
+        self._state = "waiting for owner"
         self.owneruuid = owneruuid
         self.clients = {}
 
@@ -21,9 +21,11 @@ class Server:
         self.server = self.loop.run_until_complete(asyncio.start_server(
             self.handle_new_client, "", port))
 
-    def _state(self, newstate):
-        l.debug("Change state to {!r}".format(newstate))
-        self.state = newstate
+    def setstate(self, newvalue):
+        l.info("Change state to {!r}".format(newvalue))
+        self._state = newvalue
+
+    state = property(lambda self: self._state, setstate)
 
     async def handle_new_client(self, reader, writer):
         """Handle new client depending on the state
@@ -54,19 +56,19 @@ class Server:
             # here, the reader and the writer are the other player's, not the
             # owner's
             await write(self.clients[self.owneruuid].writer, uuid, username)
-            self._state('waiting for owner response')
+            self.state = 'waiting for owner response'
             if await readline(self.clients[self.owneruuid].reader) \
                     == 'accepted':
                 self.clients[uuid] = Client(username, reader, writer)
             else:
-                self._state('waiting for player')
+                self.state = 'waiting for player'
                 await write(writer, "declined request.")
 
         # here, state must be 'waiting for owner'
         if uuid == self.owneruuid:
             self.clients[uuid] = Client(username, PlayerPrivateStatus(),
                                         reader, writer)
-            self._state("waiting for player")
+            self.state = "waiting for player"
             await write(writer, "successful identification")
         else:
             await write(writer, "not owner. denied.")

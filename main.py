@@ -59,7 +59,7 @@ class Manager:
 os.environ["SDL_VIDEO_CENTERED"] = "1"
 
 manager = Manager()
-manager.focus("Username")
+manager.focus("HostGame")
 
 going = True
 while going:

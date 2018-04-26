@@ -19,7 +19,7 @@ class HostGame:
         self.m = manager
         self.localip = gethostbyname(gethostname())
 
-        self._state("opening connection")
+        self.state = "opening connection"
 
         self.server = server.Server(self.m.uuid, self.m.username, PORT)
         self.loop = asyncio.get_event_loop()
@@ -27,7 +27,7 @@ class HostGame:
         self.reader, self.writer = self.loop.run_until_complete(
             asyncio.open_connection("127.0.0.1", PORT, loop=self.loop))
 
-        self._state("identifying")
+        self.state = "identifying"
 
         # send uuid and username to the server so that he knows we are the
         # owner. We then have a connection established and server can talk to
@@ -44,11 +44,13 @@ class HostGame:
                        "identifying {!r}".format(answer))
             raise NotImplementedError("Need to have a nice GUI for this")
 
-        self._state('waiting for other player')
+        self.state = 'waiting for other player'
 
-    def _state(self, newstate):
-        l.debug("Change state to {!r}".format(newstate))
-        self.state = newstate
+    def setstate(self, newvalue):
+        l.info("Change state to {!r}".format(newvalue))
+        self._state = newvalue
+
+    state = property(lambda self: self._state, setstate)
 
     def render(self):
         top = 50
