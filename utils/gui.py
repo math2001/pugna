@@ -74,14 +74,14 @@ class TextBox:
 
 class Button(pygame.sprite.Sprite):
 
-    def __init__(self, font, text, user_opt):
+    def __init__(self, font, text, user_opt={}):
         pygame.sprite.Sprite.__init__(self)
 
         self.text = text
 
         opt = Options()
         opt.margin = 3, 5
-        opt.thickness = 1
+        opt.thickness = 0
         opt.bordercolor = 33, 33, 33
         opt.fgcolor = font.fgcolor
         opt.bgcolor = None
@@ -105,7 +105,7 @@ class Button(pygame.sprite.Sprite):
         r.center = self.rect.center
         self.image.blit(s, r)
 
-    def mouseevent(self, e):
+    def event(self, e):
         return e.type == MOUSEBUTTONDOWN and e.button == 1 \
                 and self.rect.collidepoint(e.pos)
 

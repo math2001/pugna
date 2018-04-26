@@ -6,6 +6,8 @@ l = logging.getLogger(__name__)
 
 class Username:
 
+    menubtn = False
+
     async def on_focus(self, manager):
         self.m = manager
         self.textbox = TextBox(manager.uifont)
@@ -29,6 +31,3 @@ class Username:
         r.bottom -= 10
         self.m.screen.blit(s, r)
         self.m.screen.blit(textbox, txtrect)
-
-    async def on_blur(self):
-        self.m.uifont.origin = False

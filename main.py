@@ -5,6 +5,7 @@ import pygame
 import pygame.freetype
 from pygame.locals import *
 from constants import CAPTION
+from utils.gui import Button
 import scenes
 from uuid import uuid4
 
@@ -21,12 +22,10 @@ class Manager:
         self.rect = pygame.Rect(0, 0, 800, 600)
 
         self.uifont = pygame.freetype.Font('media/fonts/poorstory.ttf')
-        self.uifont.fgcolor = 150, 150, 150 # real original :D
-        self.uifont.size = 20
+        self.reset_uifont()
 
         self.fancyfont = pygame.freetype.Font('media/fonts/sigmar.ttf')
-        self.fancyfont.fgcolor = 200, 200, 200
-        self.fancyfont.size = 25
+        self.reset_fancyfont()
 
         self.screen = pygame.display.set_mode(self.rect.size)
         self.current = None
@@ -42,6 +41,11 @@ class Manager:
         self.clock = pygame.time.Clock()
         self.frames_count = 0
 
+        self.menubtn = Button(self.uifont, "Menu", {"size": (70, 30)})
+        self.menubtn.rect.topright = self.rect.topright
+        self.menubtn.rect.top += 5
+        self.menubtn.rect.left -= 5
+
         self.loop = asyncio.get_event_loop()
         self.loop.run_until_complete(self.focus(scene))
         self.loop.run_until_complete(self.run())
@@ -54,7 +58,19 @@ class Manager:
 
         pygame.key.set_repeat(300, 50)
 
+    def reset_uifont(self):
+        self.uifont.fgcolor = 150, 150, 150 # real original :D
+        self.uifont.size = 20
+        self.uifont.origin = False
+
+    def reset_fancyfont(self):
+        self.fancyfont.fgcolor = 200, 200, 200
+        self.fancyfont.size = 25
+        self.fancyfont.origin = False
+
     async def focus(self, scene):
+        self.reset_uifont()
+        self.reset_fancyfont()
         scene = scene.title().replace(' ', '')
         try:
             scene = getattr(scenes, scene)()
@@ -76,9 +92,13 @@ class Manager:
                     self.going = False
                 if hasattr(self.current, 'event'):
                     await self.current.event(e)
+                if self.menubtn.event(e):
+                    await self.focus("menu")
             if hasattr(self.current, 'update'):
                 await self.current.update()
             await self.current.render()
+            if getattr(self.current, 'menubtn', True):
+                self.screen.blit(self.menubtn.image, self.menubtn.rect)
             pygame.display.flip()
 
 os.environ["SDL_VIDEO_CENTERED"] = "1"

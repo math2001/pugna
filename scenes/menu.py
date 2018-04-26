@@ -3,6 +3,8 @@ from utils.gui import Button, Options
 
 class Menu:
 
+    menubtn = False
+
     async def on_focus(self, manager):
         self.m = manager
 
@@ -24,7 +26,7 @@ class Menu:
     async def event(self, e):
         if e.type == pygame.MOUSEBUTTONDOWN:
             for btn in self.buttonsprites.sprites():
-                if btn.mouseevent(e):
+                if btn.event(e):
                     await self.m.focus(btn.text)
 
 
