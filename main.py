@@ -2,7 +2,7 @@ import pygame
 import pygame.freetype
 from pygame.locals import *
 import scenes
-from uuid import uuid5
+from uuid import uuid4
 
 
 pygame.init()
@@ -25,8 +25,8 @@ class Manager:
         self.screen = pygame.display.set_mode(self.rect.size)
         self.current = None
 
-        self.uuid = uuid5() # used to identify clients
-        self.username = 'dev' # so we can skip the Username scene
+        self.uuid = uuid4().hex # used to identify clients
+        self.username = 'dev' + self.uuid[:6] # so we can skip the Username scene
 
         pygame.key.set_repeat(300, 50)
 
@@ -50,7 +50,7 @@ class Manager:
         pygame.display.flip()
 
 manager = Manager()
-manager.focus("Menu")
+manager.focus("HostGame")
 
 going = True
 while going:

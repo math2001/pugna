@@ -62,7 +62,9 @@ Start client
 Start server as host
     Start server
     Pass current client detail to server through parameter (record as owner)
-    Wait for client to send request (a UserInfo)
+    Wait for owner to make a request
+    Store the reader/writer
+    Wait for other client to send request (a UserInfo)
         Display request on GUI
             No:
                 Send string "rejected"
