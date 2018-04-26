@@ -146,8 +146,9 @@ class Button(pygame.sprite.Sprite):
                     self.rect.inflate(-opt.thickness * 2, -opt.thickness * 2),
                     opt.thickness)
 
-        font.render_to(self.image, fontrect, text, opt.fgcolor, opt.bgcolor,
-                       opt.style, size=opt.fontsize)
+        with origin(font, False) as font:
+            font.render_to(self.image, fontrect, text, opt.fgcolor,
+                    opt.bgcolor, opt.style, size=opt.fontsize)
 
     def event(self, e):
         return e.type == MOUSEBUTTONDOWN and e.button == 1 \
