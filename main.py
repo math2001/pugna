@@ -34,6 +34,8 @@ class Manager:
         self.uuid = uuid4().hex # used to identify clients
         self.username = 'dev' + self.uuid[:6] # so we can skip the Username scene
 
+        self.frames_count = 0
+
         pygame.key.set_repeat(300, 50)
 
     def focus(self, scene):
@@ -47,6 +49,7 @@ class Manager:
         scene.on_focus(self)
 
     def run(self):
+        self.frames_count += 1
         self.screen.fill(0)
         for e in pygame.event.get():
             if e.type == QUIT:
@@ -61,8 +64,11 @@ os.environ["SDL_VIDEO_CENTERED"] = "1"
 manager = Manager()
 manager.focus("HostGame")
 
+clock = pygame.time.Clock()
+
 going = True
 while going:
+    clock.tick(60)
     going = manager.run() is None
 
 pygame.quit()
