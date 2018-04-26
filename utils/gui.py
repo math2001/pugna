@@ -83,37 +83,48 @@ class TextBox:
 
 class Button(pygame.sprite.Sprite):
 
-    def __init__(self, font, text, user_opt={}):
-        pygame.sprite.Sprite.__init__(self)
+    """A simple button
+    Nothing fancy here... Notice that when the height/width is explicit
+    the margin for that specific option isn't taken into account, and the
+    border are drawn *inside* the button (so that the actually button size
+    is the size you wanted)
+    """
 
+    def __init__(self, font, text, useropt={}):
+        pygame.sprite.Sprite.__init__(self)
         self.text = text
 
         opt = Options()
-        opt.margin = 3, 5
+        opt.margin = 20, 10
         opt.thickness = 0
         opt.bordercolor = 33, 33, 33
         opt.fgcolor = font.fgcolor
         opt.bgcolor = None
         opt.fontsize = font.size
         opt.style = pygame.freetype.STYLE_DEFAULT
-        opt.size = 200, 50
-        opt.update(user_opt)
+        # if theses are None, they are automatically generated
+        opt.width = None
+        opt.height = None
+        opt.update(useropt)
 
-        self.image = pygame.Surface((
-            opt.size[0] + opt.thickness + opt.margin[0],
-            opt.size[1] + opt.thickness + opt.margin[1]))
+        fontrect = font.get_rect(text)
+        width = opt.width
+        height = opt.height
+        if opt.width is None:
+            width = fontrect.width + opt.margin[0] + opt.thickness
+        if opt.height is None:
+            height = fontrect.height + opt.margin[1] + opt.thickness
+        self.image = pygame.Surface((width, height))
         self.rect = self.image.get_rect()
 
-        pygame.draw.rect(self.image, opt.bordercolor,
-                         self.rect.inflate(-opt.thickness,
-                                           -opt.thickness),
-                         opt.thickness)
+        fontrect.center = self.rect.center
 
-        with origin(font, False) as font:
-            r = font.get_rect(text, size=opt.fontsize)
-            r.center = self.rect.center
-            font.render_to(self.image, r, None, opt.fgcolor, opt.bgcolor,
-                    opt.style, size=opt.fontsize)
+        pygame.draw.rect(self.image, opt.bordercolor,
+                    self.rect.inflate(-opt.thickness * 2, -opt.thickness * 2),
+                    opt.thickness)
+
+        font.render_to(self.image, fontrect, text, opt.fgcolor, opt.bgcolor,
+                       opt.style, size=opt.fontsize)
 
     def event(self, e):
         return e.type == MOUSEBUTTONDOWN and e.button == 1 \
