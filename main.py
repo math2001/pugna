@@ -9,7 +9,7 @@ from utils.gui import Button
 import scenes
 from uuid import uuid4
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.DEBUG, format='{asctime} {levelname:<5} {name} {message}', style='{')
 
 l = logging.getLogger(__name__)
 
