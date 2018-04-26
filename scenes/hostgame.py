@@ -84,7 +84,7 @@ class HostGame:
         if self.state == 'waiting for other player':
             self.m.uifont.origin = True
             r = self.m.uifont.get_rect("Waiting for an other player to join")
-            r.midtop = self.m.rect.centerx, top
+            r.midbottom = self.m.rect.centerx, self.m.rect.bottom - 10
             self.m.uifont.render_to(self.m.screen, r, None)
 
             dr = self.m.uifont.get_rect('.' * self.animdots)
