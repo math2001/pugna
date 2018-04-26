@@ -1,6 +1,15 @@
 import pygame
 import pygame.freetype
 from pygame.locals import *
+from contextlib import contextmanager
+
+@contextmanager
+def origin(font, enabled):
+    default = font.origin
+    font.origin = enabled
+    yield font
+    font.origin = default
+
 
 class Options(dict):
 
@@ -100,10 +109,11 @@ class Button(pygame.sprite.Sprite):
                                            -opt.thickness),
                          opt.thickness)
 
-        s, r = font.render(text, opt.fgcolor, opt.bgcolor,
-                                opt.style, size=opt.fontsize)
-        r.center = self.rect.center
-        self.image.blit(s, r)
+        with origin(font, False) as font:
+            r = font.get_rect(text, size=opt.fontsize)
+            r.center = self.rect.center
+            font.render_to(self.image, r, None, opt.fgcolor, opt.bgcolor,
+                    opt.style, size=opt.fontsize)
 
     def event(self, e):
         return e.type == MOUSEBUTTONDOWN and e.button == 1 \
