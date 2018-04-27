@@ -5,9 +5,7 @@ Before implementing hero selection, all of this must be done:
     - properly close client connections
     - server shutdown
 
-- Implement focus system for the GUI. Only the focused element should recieve
-  the keyboard events.
 - reject player while owner hasn't been logged in
 - add delay before being able to try requesting again after being declined
-- implement hover states for buttons
+- add button to username scene
 

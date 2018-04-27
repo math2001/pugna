@@ -47,7 +47,12 @@ class Options(dict):
     def __setattr__(self, attr, value):
         self[attr] = value
 
-class Button(pygame.sprite.Sprite):
+class GuiElement:
+
+    def render(self, s):
+        s.blit(self.image, self.rect)
+
+class Button(GuiElement):
 
     """A simple button
     Nothing fancy here... Notice that when the height/width is explicit
@@ -55,7 +60,6 @@ class Button(pygame.sprite.Sprite):
     border are drawn *inside* the button (so that the actually button size
     is the size you wanted)
     Make sure you put the rect (btn.rect) where you want it and render it!
-    (s.blit(btn.image, btn.rect) or with pygame.sprite.Sprite)
     Call event() with the an Event, and it'll return True if the user clicked
     on it.
     """
@@ -63,11 +67,14 @@ class Button(pygame.sprite.Sprite):
     def __init__(self, font, text, useropt={}):
         pygame.sprite.Sprite.__init__(self)
         self.text = text
+        self.font = font
+
+        self.disabled = False
 
         opt = Options()
         opt.margin = 20, 10
         opt.thickness = 0
-        opt.bordercolor = 33, 33, 33
+        opt.bordercolor = 10, 10, 10
         opt.fgcolor = font.fgcolor
         opt.bgcolor = None
         opt.fontsize = font.size
@@ -77,35 +84,68 @@ class Button(pygame.sprite.Sprite):
         opt.height = None
         opt.update(useropt)
 
-        fontrect = font.get_rect(text)
+        opt.hover_fgcolor = font.fgcolor + pygame.Color(100, 100, 100)
+        opt.hover_bgcolor = opt.bgcolor
+        opt.hover_bordercolor = opt.bordercolor
+        opt.hover_thickness = opt.thickness
+
+        opt.disabled_fgcolor = opt.fgcolor
+        opt.disabled_bgcolor = opt.bgcolor
+        opt.disabled_bordercolor = opt.bordercolor
+        opt.disabled_thickness = opt.thickness
+
+        opt.update(useropt)
+
+        self.fontrect = self.font.get_rect(self.text, style=opt.style,
+                                           size=opt.fontsize)
         width = opt.width
         height = opt.height
         if opt.width is None:
-            width = fontrect.width + opt.margin[0] + opt.thickness
+            width = self.fontrect.width + opt.margin[0] + opt.thickness
         if opt.height is None:
-            height = fontrect.height + opt.margin[1] + opt.thickness
-        self.image = pygame.Surface((width, height))
-        self.rect = self.image.get_rect()
+            height = self.fontrect.height + opt.margin[1] + opt.thickness
+        size = width, height
+        self.rect = pygame.Rect(0, 0, width, height)
+        self.fontrect.center = self.rect.center
 
-        fontrect.center = self.rect.center
+        self.normal = self._render_state(size, "", opt)
+        self.hover = self._render_state(size, "hover_", opt)
+        self.disabled = self._render_state(size, "disabled_", opt)
 
-        pygame.draw.rect(self.image, opt.bordercolor,
-                    self.rect.inflate(-opt.thickness * 2, -opt.thickness * 2),
-                    opt.thickness)
+        self.image = self.normal
 
-        with origin(font, False) as font:
-            font.render_to(self.image, fontrect, text, opt.fgcolor,
-                    opt.bgcolor, opt.style, size=opt.fontsize)
+    def _render_state(self, size, state, opt):
+        bordercolor = opt[state + "bordercolor"]
+        thickness = opt[state + "thickness"]
+        fgcolor = opt[state + "fgcolor"]
+        bgcolor = opt[state + "bgcolor"]
+
+        s = pygame.Surface(size)
+        pygame.draw.rect(s, bordercolor, self.rect.inflate(-thickness * 2,
+                                                           -thickness * 2),
+                         thickness)
+
+        with origin(self.font, False):
+            self.font.render_to(s, self.fontrect, self.text, fgcolor, bgcolor,
+                                style=opt.style, size=opt.fontsize)
+        return s
 
     def event(self, e):
-        return e.type == MOUSEBUTTONDOWN and e.button == 1 \
-                and self.rect.collidepoint(e.pos)
+        if e.type == MOUSEMOTION:
+            if self.rect.collidepoint(e.pos):
+                self.image = self.hover
+            else:
+                self.image = self.normal
+        return (e.type == MOUSEBUTTONDOWN
+                and e.button == 1
+                and self.rect.collidepoint(e.pos))
 
     def __str__(self):
         return '<Button text={!r}>'.format(self.text)
 
     def __repr__(self):
         return self.__str__()
+
 
 class TextBox:
 

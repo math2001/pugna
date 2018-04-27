@@ -4,7 +4,7 @@ import logging
 import pygame
 import pygame.freetype
 from pygame.locals import *
-from constants import CAPTION
+from constants import *
 from utils.gui import Button
 import scenes
 from uuid import uuid4
@@ -22,13 +22,18 @@ class Manager:
         self.rect = pygame.Rect(0, 0, 800, 600)
 
         self.uifont = pygame.freetype.Font('media/fonts/poorstory.ttf')
-        self.reset_uifont()
 
         self.fancyfont = pygame.freetype.Font('media/fonts/sigmar.ttf')
-        self.reset_fancyfont()
+        self.reset_fonts()
 
         self.screen = pygame.display.set_mode(self.rect.size)
         self.current = None
+
+        pygame.key.set_repeat(300, 50)
+
+        # used for communicating with server
+        self.writer = None
+        self.reader = None
 
         pygame.display.set_caption(CAPTION)
 
@@ -55,12 +60,6 @@ class Manager:
         self.loop.run_until_complete(self.focus(scene))
         self.loop.run_until_complete(self.run())
 
-        # used for communicating with server
-        self.writer = None
-        self.reader = None
-
-        pygame.key.set_repeat(300, 50)
-
     def suspensiondots(self, surface, rect, font):
         """font.origin should be True"""
         r = font.get_rect('.' * self.animdots)
@@ -68,22 +67,16 @@ class Manager:
         font.render_to(surface, r, None)
 
     def reset_fonts(self):
-        self.reset_uifont()
-        self.reset_fancyfont()
-
-    def reset_uifont(self):
-        self.uifont.fgcolor = 150, 150, 150 # real original :D
+        self.uifont.fgcolor = TEXT_FG
         self.uifont.size = 20
         self.uifont.origin = False
 
-    def reset_fancyfont(self):
-        self.fancyfont.fgcolor = 200, 200, 200
+        self.fancyfont.fgcolor = TEXT_FG
         self.fancyfont.size = 25
         self.fancyfont.origin = False
 
     async def focus(self, scene):
-        self.reset_uifont()
-        self.reset_fancyfont()
+        self.reset_fonts()
         scene = scene.title().replace(' ', '')
         try:
             scene = getattr(scenes, scene)()
@@ -124,6 +117,6 @@ class Manager:
 
 os.environ["SDL_VIDEO_CENTERED"] = "1"
 
-manager = Manager("join game")
+manager = Manager("username")
 pygame.quit()
 
