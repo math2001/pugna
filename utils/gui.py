@@ -14,24 +14,24 @@ def word_wrap(surf, text, font, opt):
     """Stolen from the pygame documentation freetype.Font.render_to
     I tweaked it a bit to support \n
     """
-    font.origin = True
-    width, height = surf.get_size()
-    line_spacing = font.get_sized_height() + 2
-    x, y = 0, line_spacing
-    space = font.get_rect(' ')
-    for line in text.splitlines():
-        for word in line.split(' '):
-            bounds = font.get_rect(word)
-            if x + bounds.width + bounds.x >= width:
-                x, y = 0, y + line_spacing
-            if x + bounds.width + bounds.x >= width:
-                raise ValueError("word too wide for the surface")
-            if y + bounds.height - bounds.y >= height:
-                raise ValueError("text to long for the surface")
-            font.render_to(surf, (x, y), opt.bgcolor, opt.fgcolor)
-            x += bounds.width + space.width
-        x, y = 0, y + line_spacing
-    return x, y
+    with origin(font, True):
+        width, height = surf.get_size()
+        line_spacing = font.get_sized_height() + 2
+        x, y = 0, line_spacing
+        space = font.get_rect(' ')
+        for line in text.splitlines():
+            for word in line.split(' '):
+                bounds = font.get_rect(word)
+                if x + bounds.width + bounds.x >= width:
+                    x, y = 0, y + line_spacing
+                if x + bounds.width + bounds.x >= width:
+                    raise ValueError("word too wide for the surface")
+                if y + bounds.height - bounds.y >= height:
+                    raise ValueError("text to long for the surface")
+                font.render_to(surf, (x, y), opt.bgcolor, opt.fgcolor)
+                x += bounds.width + space.width
+            x, y = 0, y + line_spacing
+        return x, y
 
 class Options(dict):
 
@@ -149,53 +149,75 @@ class Button(GuiElement):
 
 class TextBox:
 
-    def __init__(self, font, user_opt={}):
+    def __init__(self, font, **useropt):
         opt = Options()
-        opt.initialtext = ""
+        opt.initialtext = ''
         opt.bordercolor = 33, 33, 33
-        opt.focusedbordercolor = 150, 150, 150
-        opt.fgcolor = 150, 150, 150
-        opt.bgcolor = None
-        opt.margin = 10, 10
-        opt.style = pygame.freetype.STYLE_DEFAULT
-        opt.fontsize = 20
-        opt.size = 200, font.get_sized_height(getattr(user_opt, 'fontsize',
-                                                      opt.fontsize)) + 10
+        opt.origin = 10, 10
         opt.thickness = 1
-        opt.update(user_opt)
+        opt.fgcolor = font.fgcolor
+        opt.bgcolor = None
+        opt.style = pygame.freetype.STYLE_DEFAULT
+        opt.fontsize = font.size
+        opt.maxlength = None
+        opt.update(useropt)
+
+        if opt.maxlength is not None and len(opt.initialtext) > opt.maxlength:
+            raise ValueError("Initial text is greater than the maximum length")
+
+        opt.width = 200
+        opt.height = font.get_sized_height(opt.fontsize) + 10
+        opt.update(useropt)
+
+        opt.hover_bordercolor = opt.bordercolor
+        opt.hover_fgcolor = opt.fgcolor
+        opt.hover_bgcolor = opt.bgcolor
+        opt.hover_thickness = opt.thickness
 
         self.opt = opt
 
         self.text = self.opt.initialtext
         self.font = font
-        self.focused = False
+        self.rect = pygame.Rect(0, 0, opt.width, opt.height)
+
+        self.state = ''
+        self.normal = self._render_state("")
+        self.hover = self._render_state("hover_")
+
+        self.image = self.normal
+
+    def _render_state(self, state):
+        bd = self.opt[state + 'bordercolor']
+        fg = self.opt[state + 'fgcolor']
+        bg = self.opt[state + 'bgcolor']
+        thck = self.opt[state + 'thickness']
+
+        s = pygame.Surface((self.opt.width, self.opt.height))
+        pygame.draw.rect(s, bd, self.rect.inflate(-thck * 2, -thck * 2), thck)
+        return s
 
     def event(self, e):
-        if not self.focused:
-            return
         if e.type == KEYDOWN:
             if e.unicode == '\x08':
                 if len(self.text) > 0:
                     self.text = self.text[:-1]
             elif e.unicode == '\r':
                 return True
-            else:
+            elif self.opt.maxlength is None or \
+                len(self.text) < self.opt.maxlength:
                 self.text += e.unicode
+        elif e.type == MOUSEMOTION:
+            self.state = 'hover_' if self.rect.collidepoint(e.pos) else ''
+            self.image = self.hover if self.state == 'hover_' else self.normal
 
-    def render(self):
-        surface = pygame.Surface((self.opt.size[0] + self.opt.thickness,
-                                 self.opt.size[1] + self.opt.thickness))
-        rect = surface.get_rect()
-        bordercolor = self.opt.bordercolor if self.focused \
-                      else self.opt.focusedbordercolor
-        pygame.draw.rect(surface, bordercolor, rect.inflate(-self.opt.thickness,
-            -self.opt.thickness), self.opt.thickness)
-        origin = (rect.left + self.opt.margin[0],
-                 rect.bottom - self.opt.margin[1])
-        self.font.render_to(surface, origin, self.text,
-                            self.opt.fgcolor, self.opt.bgcolor, self.opt.style,
-                            size=self.opt.fontsize)
-        return surface, rect
+    def render(self, s):
+        origin = (self.rect.left + self.opt.origin[0],
+                  self.rect.bottom - self.opt.origin[1])
+        fg = self.opt[self.state + 'fgcolor']
+        bg = self.opt[self.state + 'bgcolor']
+        s.blit(self.image, self.rect)
+        self.font.render_to(s, origin, self.text, fg, bg,
+                            self.opt.style, size=self.opt.fontsize)
 
     def __str__(self):
         return '<TextBox text={!r}>'.format(self.text)
@@ -255,7 +277,7 @@ class MessageBox:
 
     def calibre(self):
         # set button's rect absolute position to be able to detect collsion
-        self.ok.rect.topleft = (self.rect.left + self.ok.rect.left, 
+        self.ok.rect.topleft = (self.rect.left + self.ok.rect.left,
                                 self.rect.top + self.ok.rect.top)
 
     def event(self, e):
@@ -278,7 +300,7 @@ class ConfirmBox(MessageBox):
     @classmethod
     def new(cls, font, message, ok, cancel, **useropt):
         """A shortct to automatically create the buttons from text"""
-        return cls(font, message, Button(font, ok), 
+        return cls(font, message, Button(font, ok),
                    Button(font, cancel), **useropt)
 
     def __init__(self, font, message, ok, cancel, **useropt):
@@ -289,7 +311,7 @@ class ConfirmBox(MessageBox):
 
     def calibre(self):
         super().calibre()
-        self.cancel.rect.topleft = (self.rect.left + self.cancel.rect.left, 
+        self.cancel.rect.topleft = (self.rect.left + self.cancel.rect.left,
                                     self.rect.top + self.cancel.rect.top)
 
     def event(self, e):

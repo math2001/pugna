@@ -1,6 +1,6 @@
 import pygame
 import logging
-from utils.gui import TextBox
+from utils.gui import TextBox, Button
 
 log = logging.getLogger(__name__)
 
@@ -10,24 +10,24 @@ class Username:
 
     async def on_focus(self, manager):
         self.m = manager
-        self.textbox = TextBox(manager.uifont)
-        self.textbox.focused = True
-
         self.m.uifont.origin = True
+        self.textbox = TextBox(manager.uifont)
+        self.textbox.rect.center = self.m.rect.center
+
+        self.btn = Button(manager.uifont, "OK", maxlength=16)
+        self.btn.rect.midleft = self.textbox.rect.midright
+        self.btn.rect.left += 10
+
+        self.lbl, self.lblrect = self.m.uifont.render("Enter your username:")
+        self.lblrect.midbottom = self.textbox.rect.midtop
+        self.lblrect.top -= 10
 
     async def event(self, e):
         if self.textbox.event(e) is True:
             # TODO: validate username
             self.m.username = self.textbox.text
-            # self.m.loop.create_task(self.m.focus("Menu"))
             await self.m.focus("Menu")
 
     async def render(self):
-        textbox, txtrect = self.textbox.render()
-        txtrect.center = self.m.rect.center
-
-        s, r = self.m.uifont.render("Enter your username and press enter")
-        r.midbottom = txtrect.midtop
-        r.bottom -= 10
-        self.m.screen.blit(s, r)
-        self.m.screen.blit(textbox, txtrect)
+        self.textbox.render(self.m.screen)
+        self.m.screen.blit(self.lbl, self.lblrect)
