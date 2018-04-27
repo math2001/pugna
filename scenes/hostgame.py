@@ -27,21 +27,20 @@ class HostGame:
 
         self.animdots = 0
 
-        self.server = server.Server(self.m.uuid, self.m.username)
+        self.server = server.Server(self.m.uuid, self.m.username, self.m.loop)
 
-        self.state = "creating server"
+        self.state = "Creating server"
 
-        # self.connection = self.m.loop.create_task(self.server.start(PORT))
         self.connection = await self.server.start(PORT)
 
-        self.state = 'opening connection'
+        self.state = 'Opening connection with server'
 
         self.m.loop.create_task(self.connect_to_server())
 
     async def connect_to_server(self):
-        log.debug("Open connection with server")
-        self.reader, self.writer = await asyncio.open_connection("127.0.0.1", PORT, loop=self.m.loop)
-        self.state = "identifying"
+        self.reader, self.writer = await asyncio.open_connection("127.0.0.1",
+                                            PORT, loop=self.m.loop)
+        self.state = "Identifying"
 
         log.debug("Send ids to the server")
 
@@ -60,11 +59,7 @@ class HostGame:
             raise NotImplementedError("Need to have a nice GUI for this")
         log.debug("successful logging as owner with the server")
 
-        self.state = 'waiting for other player'
-        self.request = None
-
         self.listener = self.m.loop.create_task(self.listen_for_request())
-
 
     async def on_blur(self):
         log.debug("Stop listening for requests")
@@ -77,25 +72,23 @@ class HostGame:
         # await self.writer.drain()
 
     async def listen_for_request(self):
-        log.debug("Start listening for requests")
+        self.request = None
+        self.confirmbox = None
+        self.state = 'Waiting for an other player to join'
+
+        log.debug(f"Start listening for requests {self.reader}")
         uuid = await readline(self.reader)
         log.debug(f"Got uuid {uuid!r} from server.")
         username = await readline(self.reader)
         log.debug(f"Got a player request ({username!r})")
         self.request = Request(uuid, username)
-        self.state = 'got request from player'
+        self.state = 'Got request from player'
 
-        self.confirmbox = ConfirmBox.new(self.m.uifont, f"{username} wants to play with you!",
+        self.confirmbox = ConfirmBox.new(self.m.uifont,
+                                         f"{username} wants to play with you!",
                                         "Accept!", "Na...")
         self.confirmbox.rect.center = self.m.rect.center
         self.confirmbox.calibre()
-
-    def setstate(self, newvalue):
-        log.info("Change state to {!r}".format(newvalue))
-        self._state = newvalue
-
-    state = property(lambda self: self._state, setstate)
-
 
     async def event(self, e):
         if self.confirmbox:
@@ -104,7 +97,7 @@ class HostGame:
                 log.info("Request accecepted")
                 await write(self.writer, 'accepted')
                 self.confirmbox = None
-                self.state = "waiting for server green flag"
+                self.state = "Waiting for server green flag"
                 response = await readline(self.reader)
                 log.debug(f"Got response from server {response!r}")
                 if response == 'select champion':
@@ -113,9 +106,9 @@ class HostGame:
                     log.critical(f"Got unexpected response {response!r}")
                     raise NotImplementedError("This shouldn't happen")
             elif result is False:
-                log.info("Owner declined")
                 await write(self.writer, 'declined')
-                self.confirmbox = None
+                self.listener = self.m.loop.create_task(
+                                self.listen_for_request())
 
 
     def initrender(self):
@@ -140,18 +133,23 @@ class HostGame:
         self.confirmbox = None
 
     async def render(self):
-
         for s, r in self.to_render:
             self.m.screen.blit(s, r)
 
-        if self.state == 'waiting for other player':
-            self.m.uifont.origin = True
-            r = self.m.uifont.get_rect("Waiting for an other player to join")
-            r.midbottom = self.m.rect.centerx, self.m.rect.bottom - 10
-            self.m.uifont.render_to(self.m.screen, r, None)
+        self.m.uifont.origin = True
+        r = self.m.uifont.get_rect(self.state)
+        r.midbottom = self.m.rect.centerx, self.m.rect.bottom - 10
+        self.m.uifont.render_to(self.m.screen, r, None)
 
-            self.m.suspensiondots(self.m.screen, r, self.m.uifont)
+        self.m.suspensiondots(self.m.screen, r, self.m.uifont)
 
         if self.confirmbox:
             self.m.screen.blit(self.confirmbox.image, self.confirmbox.rect)
+
+    def setstate(self, newvalue):
+        log.info("Change state to {!r}".format(newvalue))
+        self._state = newvalue
+
+    state = property(lambda self: self._state, setstate)
+
 
