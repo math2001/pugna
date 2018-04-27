@@ -51,10 +51,10 @@ class Manager:
         self.clock = pygame.time.Clock()
         self.frames_count = 0
 
-        self.menubtn = Button(self.uifont, "Menu", {"size": (70, 30)})
-        self.menubtn.rect.topright = self.rect.topright
+        self.menubtn = Button(self.uifont, "Menu")
+        self.menubtn.rect.topleft = self.rect.topleft
         self.menubtn.rect.top += 5
-        self.menubtn.rect.left -= 5
+        self.menubtn.rect.left += 5
 
         self.loop = asyncio.get_event_loop()
         self.loop.run_until_complete(self.focus(scene))

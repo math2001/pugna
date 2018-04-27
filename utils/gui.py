@@ -72,9 +72,9 @@ class Button(GuiElement):
         self.disabled = False
 
         opt = Options()
-        opt.margin = 20, 10
-        opt.thickness = 0
-        opt.bordercolor = 10, 10, 10
+        opt.margin = 30, 20
+        opt.thickness = 1
+        opt.bordercolor = pygame.Color(10, 10, 10)
         opt.fgcolor = font.fgcolor
         opt.bgcolor = None
         opt.fontsize = font.size
@@ -86,7 +86,7 @@ class Button(GuiElement):
 
         opt.hover_fgcolor = font.fgcolor + pygame.Color(100, 100, 100)
         opt.hover_bgcolor = opt.bgcolor
-        opt.hover_bordercolor = opt.bordercolor
+        opt.hover_bordercolor = opt.bordercolor + pygame.Color(10, 10, 10)
         opt.hover_thickness = opt.thickness
 
         opt.disabled_fgcolor = opt.fgcolor
