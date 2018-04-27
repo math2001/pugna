@@ -34,10 +34,15 @@ class Manager:
 
         # used to identify clients
         self.uuid = uuid4().hex
-        # so we can skip the Username scene
+        # so we can skip the Username scene (for dev)
         self.username = 'dev' + self.uuid[:6]
 
+        # this is a simple counter that iterates between 1 and 3 to display
+        # an animation suspension dots after messages
+        self.animdots = 0
+
         self.going = True
+
         self.clock = pygame.time.Clock()
         self.frames_count = 0
 
@@ -50,13 +55,18 @@ class Manager:
         self.loop.run_until_complete(self.focus(scene))
         self.loop.run_until_complete(self.run())
 
-        self.focusing_scene = False
 
         # used for communicating with server
         self.writer = None
         self.reader = None
 
         pygame.key.set_repeat(300, 50)
+
+    def suspensiondots(self, surface, rect, font):
+        """font.origin should be True"""
+        r = font.get_rect('.' * self.animdots)
+        r.topleft = rect.topright
+        font.render_to(surface, r, None)
 
     def reset_fonts(self):
         self.reset_uifont()
@@ -84,12 +94,18 @@ class Manager:
         if hasattr(self.current, 'on_blur'):
             await self.current.on_blur()
         # self.loop.create_task(scene.on_focus(self))
-        self.focusing_scene = await scene.on_focus(self)
+        await scene.on_focus(self)
         self.current = scene
 
     async def run(self):
         while self.going:
             self.frames_count += 1
+
+            if self.frames_count % 20 == 0:
+                self.animdots += 1
+                if self.animdots == 4:
+                    self.animdots = 0
+
             self.screen.fill(0)
             for e in pygame.event.get():
                 if e.type == QUIT:

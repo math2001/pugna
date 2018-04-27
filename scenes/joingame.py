@@ -37,10 +37,12 @@ class JoinGame:
     state = property(lambda self: self._state, setstate)
 
     async def send_request(self, ip):
+        self.state = 'opening connection'
         try:
             self.m.reader, self.m.writer = await open_connection(ip, PORT)
         except (ConnectionRefusedError, OSError) as e:
             await self.display_error(e)
+        self.state = "waiting for owner"
         await write(self.m.writer, self.m.uuid, self.m.username)
         response = await readline(self.m.reader)
         if response == 'accepted':
@@ -61,7 +63,6 @@ class JoinGame:
 
     async def event(self, e):
         if self.textbox.event(e):
-            self.state = 'waiting for server reply'
             await self.send_request(self.textbox.text)
 
     async def render(self):

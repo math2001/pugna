@@ -144,20 +144,13 @@ class HostGame:
         for s, r in self.to_render:
             self.m.screen.blit(s, r)
 
-        if self.m.frames_count % 20 == 0:
-            self.animdots += 1
-            if self.animdots == 4:
-                self.animdots = 0
-
         if self.state == 'waiting for other player':
             self.m.uifont.origin = True
             r = self.m.uifont.get_rect("Waiting for an other player to join")
             r.midbottom = self.m.rect.centerx, self.m.rect.bottom - 10
             self.m.uifont.render_to(self.m.screen, r, None)
 
-            dr = self.m.uifont.get_rect('.' * self.animdots)
-            dr.topleft = r.topright
-            self.m.uifont.render_to(self.m.screen, dr, None)
+            self.m.suspensiondots(self.m.screen, r, self.m.uifont)
 
         if self.confirmbox:
             self.m.screen.blit(self.confirmbox.image, self.confirmbox.rect)
