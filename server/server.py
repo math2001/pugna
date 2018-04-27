@@ -100,6 +100,8 @@ class Server:
             log.warning(f"Got fake request pretenting to be owner "
                         f"{uuid!r} {username!r}")
             await write(writer, "not owner. denied.")
+            writer.write_eof()
+            await writer.drain()
             writer.close()
 
     async def broadcast(self, *lines):
@@ -112,10 +114,9 @@ class Server:
     def __repr__(self):
         return self.__str__()
 
-
 if __name__ == "__main__":
     loop = asyncio.get_event_loop()
-    server = Server('dev', 'dev')
+    server = Server('dev', 'dev', loop)
     logging.basicConfig(level=logging.DEBUG, format='{asctime} {levelname:<5} {name} {message}', style='{')
     loop.create_task(server.start(9877))
     try:
