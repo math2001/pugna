@@ -50,7 +50,7 @@ class Server:
         owner. Then, we wait for the owner answer. We set the state to 'waiting
         for owner response' so that 2 other player can't set requests at the
         same time If it 'Accepted', we store the other player's information and
-        send 'Choose champion' to both the other player and the owner.
+        send 'Choose hero' to both the other player and the owner.
         """
 
         uuid = (await readline(reader))
@@ -80,9 +80,9 @@ class Server:
                                             reader, writer)
                 # to the client
                 await write(writer, 'accepted')
-                self.state = 'waiting for champion selection'
-                log.info("Broadcast select champion")
-                await self.broadcast('select champion')
+                self.state = 'waiting for hero selection'
+                log.info("Broadcast select hero")
+                await self.broadcast('select hero')
             else:
                 self.state = 'waiting for player'
                 await write(writer, "declined")

@@ -100,8 +100,8 @@ class HostGame:
                 self.state = "Waiting for server green flag"
                 response = await readline(self.reader)
                 log.debug(f"Got response from server {response!r}")
-                if response == 'select champion':
-                    await self.m.focus("select champion")
+                if response == 'select hero':
+                    await self.m.focus("select hero")
                 else:
                     log.critical(f"Got unexpected response {response!r}")
                     raise NotImplementedError("This shouldn't happen")
