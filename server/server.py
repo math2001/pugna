@@ -1,4 +1,7 @@
 import asyncio
+import sys
+import os
+sys.path.append(os.getcwd())
 import logging
 from collections import namedtuple
 from utils.network import *
@@ -93,7 +96,7 @@ class Server:
             await write(writer, "successful identification")
         else:
             l.warning(f"Got fake request pretenting to be owner "
-                       "{uuid!r} {username!r}")
+                      f"{uuid!r} {username!r}")
             await write(writer, "not owner. denied.")
             writer.close()
 
@@ -106,3 +109,14 @@ class Server:
 
     def __repr__(self):
         return self.__str__()
+
+
+if __name__ == "__main__":
+    loop = asyncio.get_event_loop()
+    server = Server('dev', 'dev')
+    loop.create_task(server.start(9877))
+    try:
+        loop.run_forever()
+    finally:
+        server.close()
+        loop.close()
