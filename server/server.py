@@ -28,9 +28,11 @@ class Server:
 
     async def close(self):
         self.state = "closed"
-        self.server.close()
         for client in self.clients.values():
+            client.writer.write_eof()
+            await client.writer.drain()
             client.writer.close()
+        self.server.close()
 
     def setstate(self, newvalue):
         log.info("Change state to {!r}".format(newvalue))
