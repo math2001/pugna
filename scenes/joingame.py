@@ -44,7 +44,7 @@ class JoinGame:
         await write(self.m.writer, self.m.uuid, self.m.username)
         response = await readline(self.m.reader)
         if response == 'accepted':
-            await self.m.focus("Champion selection")
+            await self.m.focus("select champion")
         elif response == 'owner already requested':
             await self.confirm_request_again()
         elif response == 'declined':
