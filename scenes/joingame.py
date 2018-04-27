@@ -44,7 +44,7 @@ class JoinGame:
         await write(self.m.writer, self.m.uuid, self.m.username)
         response = await readline(self.m.reader)
         if response == 'accepted':
-            aogwait self.m.focus("select champion")
+            await self.m.focus("select champion")
         elif response == 'owner already requested':
             await self.confirm_request_again()
         elif response == 'declined':
@@ -63,7 +63,6 @@ class JoinGame:
         if self.textbox.event(e):
             self.state = 'waiting for server reply'
             await self.send_request(self.textbox.text)
-
 
     async def render(self):
         self.m.screen.blit(self.title, self.titlerect)

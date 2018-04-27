@@ -96,7 +96,7 @@ class Server:
             await write(writer, "successful identification")
         else:
             log.warning(f"Got fake request pretenting to be owner "
-                      f"{uuid!r} {username!r}")
+                        f"{uuid!r} {username!r}")
             await write(writer, "not owner. denied.")
             writer.close()
 
@@ -114,6 +114,7 @@ class Server:
 if __name__ == "__main__":
     loop = asyncio.get_event_loop()
     server = Server('dev', 'dev')
+    logging.basicConfig(level=logging.DEBUG, format='{asctime} {levelname:<5} {name} {message}', style='{')
     loop.create_task(server.start(9877))
     try:
         loop.run_forever()
