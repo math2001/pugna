@@ -76,7 +76,7 @@ class HostGame:
         self.confirmbox = None
         self.state = 'Waiting for an other player to join'
 
-        log.debug(f"Start listening for requests {self.reader}")
+        log.debug("Start listening for requests")
         uuid = await readline(self.reader)
         log.debug(f"Got uuid {uuid!r} from server.")
         username = await readline(self.reader)

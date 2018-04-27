@@ -73,3 +73,10 @@ class JoinGame:
         r.midtop = self.labelrect.midbottom
         r.top += 10
         self.m.screen.blit(s, r)
+
+        self.m.uifont.origin = True
+        r = self.m.uifont.get_rect(self.state)
+        r.midbottom = self.m.rect.centerx, self.m.rect.bottom - 10
+        self.m.uifont.render_to(self.m.screen, r, None)
+
+        self.m.suspensiondots(self.m.screen, r, self.m.uifont)

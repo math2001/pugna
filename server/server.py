@@ -15,10 +15,11 @@ class PlayerPrivateStatus:
 
 class Server:
 
-    def __init__(self, owneruuid, ownerusername):
+    def __init__(self, owneruuid, ownerusername, loop):
         self.owneruuid = owneruuid
         self.clients = {}
         self._state = 'closed'
+        self.loop = loop
 
     async def start(self, port):
         log.info("Start server")
@@ -85,6 +86,7 @@ class Server:
             else:
                 self.state = 'waiting for player'
                 await write(writer, "declined")
+                self.loop.create_task(self.handle_new_client(reader, writer))
             return
 
         # here, state must be 'waiting for owner'
