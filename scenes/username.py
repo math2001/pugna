@@ -1,6 +1,6 @@
 import pygame
 import logging
-from utils.gui import TextBox, Options
+from utils.gui import TextBox
 
 log = logging.getLogger(__name__)
 

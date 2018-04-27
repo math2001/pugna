@@ -64,7 +64,7 @@ class Button(GuiElement):
     on it.
     """
 
-    def __init__(self, font, text, useropt={}):
+    def __init__(self, font, text, **useropt):
         pygame.sprite.Sprite.__init__(self)
         self.text = text
         self.font = font
@@ -219,11 +219,11 @@ class MessageBox:
     """
 
     @classmethod
-    def new(cls, font, message, ok, useropt={}):
+    def new(cls, font, message, ok, **useropt):
         """A shortcut to automatically create the button from text"""
-        return cls(font, message, Button(font, ok), useropt)
+        return cls(font, message, Button(font, ok), **useropt)
 
-    def __init__(self, font, message, ok, useropt={}):
+    def __init__(self, font, message, ok, **useropt):
         self.ok = ok
 
         opt = Options()
@@ -278,12 +278,12 @@ class MessageBox:
 class ConfirmBox(MessageBox):
 
     @classmethod
-    def new(cls, font, message, ok, cancel, useropt={}):
+    def new(cls, font, message, ok, cancel, **useropt):
         """A shortct to automatically create the buttons from text"""
         return cls(font, message, Button(font, ok), 
                    Button(font, cancel), useropt)
 
-    def __init__(self, font, message, ok, cancel, useropt={}):
+    def __init__(self, font, message, ok, cancel, **useropt):
         super().__init__(font, message, ok, useropt)
         self.cancel = cancel
         self.cancel.rect.midright = self.ok.rect.midleft

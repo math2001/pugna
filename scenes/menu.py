@@ -21,7 +21,7 @@ class Menu:
         self.buttons = []
         top = self.title[1].bottom + 100
         for s in ['Host game', 'Join game', 'About', 'Quit']:
-            b = Button(self.m.fancyfont, s, opts)
+            b = Button(self.m.fancyfont, s, **opts)
             b.rect.centerx = self.m.rect.centerx
             b.rect.top = top
             top += b.rect.height + 20

@@ -58,7 +58,7 @@ class JoinGame:
 
     async def request_declined(self):
         self.messagebox = MessageBox.new(self.m.uifont,
-                                         "Your request was declined\nYou may try again", "OK")
+                "Your request was declined\nYou may try again", "OK")
         self.messagebox.rect.center = self.m.rect.center
         self.messagebox.calibre()
         self.state = 'Waiting for user input'
@@ -68,9 +68,8 @@ class JoinGame:
 
     async def display_error(self, error):
         self.messagebox = MessageBox.new(self.m.uifont,
-                                         "An error has occurred while oppening "
-                                         "the connection\n"
-                                         f"{error.strerror}", "OK")
+            "An error has occurred while oppening the connection\n"
+            f"{error.strerror}", "OK")
         self.messagebox.rect.center = self.m.rect.center
         self.messagebox.calibre()
         self.state = "Waiting for user input"
