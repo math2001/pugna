@@ -2,7 +2,7 @@ import pygame
 import logging
 from constants import PORT
 from asyncio import open_connection
-from utils.gui import TextBox
+from utils.gui import TextBox, MessageBox
 from utils.network import write, readline
 
 log = logging.getLogger(__name__)
@@ -11,9 +11,11 @@ class JoinGame:
 
     async def on_focus(self, manager):
         self.m = manager
-        self.state = 'waiting for user input'
+        self.state = 'Waiting for user input'
         self.textbox = TextBox(self.m.uifont)
         self.textbox.focused = True
+
+        self.messagebox = None
 
         self.m.uifont.origin = True
 
@@ -37,12 +39,12 @@ class JoinGame:
     state = property(lambda self: self._state, setstate)
 
     async def send_request(self, ip):
-        self.state = 'opening connection'
+        self.state = 'Opening connection'
         try:
             self.m.reader, self.m.writer = await open_connection(ip, PORT)
         except (ConnectionRefusedError, OSError) as e:
-            await self.display_error(e)
-        self.state = "waiting for owner"
+            return await self.display_error(e)
+        self.state = "Waiting for owner"
         await write(self.m.writer, self.m.uuid, self.m.username)
         response = await readline(self.m.reader)
         if response == 'accepted':
@@ -51,19 +53,34 @@ class JoinGame:
             await self.confirm_request_again()
         elif response == 'declined':
             await self.request_declined()
+        else:
+            raise ValueError(f"Unexpected response from server {response!r}")
 
     async def request_declined(self):
-        raise NotImplementedError("Display status message")
+        self.messagebox = MessageBox.new(self.m.uifont,
+                                         "Your request was declined\nYou may try again", "OK")
+        self.messagebox.rect.center = self.m.rect.center
+        self.messagebox.calibre()
+        self.state = 'Waiting for user input'
 
     async def confirm_request_again(self):
         raise NotImplementedError("Display confirm popup")
 
     async def display_error(self, error):
-        raise NotImplementedError(error.strerror)
+        self.messagebox = MessageBox.new(self.m.uifont,
+                                         "An error has occurred while oppening "
+                                         "the connection\n"
+                                         f"{error.strerror}", "OK")
+        self.messagebox.rect.center = self.m.rect.center
+        self.messagebox.calibre()
+        self.state = "Waiting for user input"
 
     async def event(self, e):
         if self.textbox.event(e):
             await self.send_request(self.textbox.text)
+        if self.messagebox:
+            if self.messagebox.event(e):
+                self.messagebox = None
 
     async def render(self):
         self.m.screen.blit(self.title, self.titlerect)
@@ -80,3 +97,6 @@ class JoinGame:
         self.m.uifont.render_to(self.m.screen, r, None)
 
         self.m.suspensiondots(self.m.screen, r, self.m.uifont)
+
+        if self.messagebox:
+            self.messagebox.render(self.m.screen)

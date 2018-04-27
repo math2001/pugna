@@ -11,23 +11,26 @@ def origin(font, enabled):
     font.origin = default
 
 def word_wrap(surf, text, font, opt):
-    """Stolen from the pygame documentation freetype.Font.render_to"""
+    """Stolen from the pygame documentation freetype.Font.render_to
+    I tweaked it a bit to support \n
+    """
     font.origin = True
-    words = text.split(' ')
     width, height = surf.get_size()
     line_spacing = font.get_sized_height() + 2
     x, y = 0, line_spacing
     space = font.get_rect(' ')
-    for word in words:
-        bounds = font.get_rect(word)
-        if x + bounds.width + bounds.x >= width:
-            x, y = 0, y + line_spacing
-        if x + bounds.width + bounds.x >= width:
-            raise ValueError("word too wide for the surface")
-        if y + bounds.height - bounds.y >= height:
-            raise ValueError("text to long for the surface")
-        font.render_to(surf, (x, y), opt.bgcolor, opt.fgcolor)
-        x += bounds.width + space.width
+    for line in text.splitlines():
+        for word in line.split(' '):
+            bounds = font.get_rect(word)
+            if x + bounds.width + bounds.x >= width:
+                x, y = 0, y + line_spacing
+            if x + bounds.width + bounds.x >= width:
+                raise ValueError("word too wide for the surface")
+            if y + bounds.height - bounds.y >= height:
+                raise ValueError("text to long for the surface")
+            font.render_to(surf, (x, y), opt.bgcolor, opt.fgcolor)
+            x += bounds.width + space.width
+        x, y = 0, y + line_spacing
     return x, y
 
 class Options(dict):
@@ -222,6 +225,10 @@ class MessageBox:
         if e.type == MOUSEBUTTONDOWN:
             if self.ok.event(e):
                 return True
+
+    def render(self, s):
+        """You don't *have* to use this method"""
+        s.blit(self.image, self.rect)
 
     def __str__(self):
         return f"<MessageBox {self.message!r}>"

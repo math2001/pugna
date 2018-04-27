@@ -124,6 +124,6 @@ class Manager:
 
 os.environ["SDL_VIDEO_CENTERED"] = "1"
 
-manager = Manager("username")
+manager = Manager("join game")
 pygame.quit()
 
