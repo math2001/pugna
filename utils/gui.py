@@ -206,8 +206,7 @@ class TextBox:
 class MessageBox:
 
     """Creates a little popup
-    Place the mb.rect where you want it and render with s.blit(mb.image,
-    mb.rect)
+    Place the mb.rect where you want it and render it.
     Call event() with an Event and it'll return True if the user
     cliked ok and return False if the user clicked cancel.
     If you do move the rect, make sure you call calibre() after it,
@@ -253,7 +252,6 @@ class MessageBox:
 
         ok.rect.bottomright = pygame.math.Vector2(self.rect.bottomright) \
                               - pygame.math.Vector2(opt.margin)
-        self.image.blit(ok.image, ok.rect)
 
     def calibre(self):
         # set button's rect absolute position to be able to detect collsion
@@ -261,13 +259,13 @@ class MessageBox:
                                 self.rect.top + self.ok.rect.top)
 
     def event(self, e):
-        if e.type == MOUSEBUTTONDOWN:
-            if self.ok.event(e):
-                return True
+        if self.ok.event(e):
+            return True
 
     def render(self, s):
         """You don't *have* to use this method"""
         s.blit(self.image, self.rect)
+        self.ok.render(s)
 
     def __str__(self):
         return f"<MessageBox {self.message!r}>"
@@ -281,14 +279,13 @@ class ConfirmBox(MessageBox):
     def new(cls, font, message, ok, cancel, **useropt):
         """A shortct to automatically create the buttons from text"""
         return cls(font, message, Button(font, ok), 
-                   Button(font, cancel), useropt)
+                   Button(font, cancel), **useropt)
 
     def __init__(self, font, message, ok, cancel, **useropt):
-        super().__init__(font, message, ok, useropt)
+        super().__init__(font, message, ok, **useropt)
         self.cancel = cancel
         self.cancel.rect.midright = self.ok.rect.midleft
         self.cancel.rect.left -= 10
-        self.image.blit(self.cancel.image, self.cancel.rect)
 
     def calibre(self):
         super().calibre()
@@ -296,11 +293,14 @@ class ConfirmBox(MessageBox):
                                     self.rect.top + self.cancel.rect.top)
 
     def event(self, e):
-        if e.type == MOUSEBUTTONDOWN:
-            if self.ok.event(e):
-                return True
-            elif self.cancel.event(e):
-                return False
+        if self.ok.event(e):
+            return True
+        elif self.cancel.event(e):
+            return False
+
+    def render(self, s):
+        super().render(s)
+        self.cancel.render(s)
 
     def __str__(self):
         return f"<ConfirmBox {self.message!r}>"

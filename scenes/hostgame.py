@@ -144,7 +144,7 @@ class HostGame:
         self.m.suspensiondots(self.m.screen, r, self.m.uifont)
 
         if self.confirmbox:
-            self.m.screen.blit(self.confirmbox.image, self.confirmbox.rect)
+            self.confirmbox.render(self.m.screen)
 
     def setstate(self, newvalue):
         log.info("Change state to {!r}".format(newvalue))
