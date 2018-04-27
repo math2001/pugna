@@ -9,7 +9,7 @@ from constants import PORT
 from utils.network import *
 from utils.gui import ConfirmBox
 
-l = logging.getLogger(__name__)
+log = logging.getLogger(__name__)
 
 Request = namedtuple("Request", 'uuid username')
 
@@ -39,11 +39,11 @@ class HostGame:
         self.m.loop.create_task(self.connect_to_server())
 
     async def connect_to_server(self):
-        l.debug("Open connection with server")
+        log.debug("Open connection with server")
         self.reader, self.writer = await asyncio.open_connection("127.0.0.1", PORT, loop=self.m.loop)
         self.state = "identifying"
 
-        l.debug("Send ids to the server")
+        log.debug("Send ids to the server")
 
         # send uuid and username to the server so that he knows we are the
         # owner. We then have a connection established and server can talk to
@@ -55,10 +55,10 @@ class HostGame:
         if answer != "successful identification":
             # can't be bothered to do that right now since it is very unlikely
             # to happen
-            l.critical("Unexpected answer while "
+            log.critical("Unexpected answer while "
                        "identifying {!r}".format(answer))
             raise NotImplementedError("Need to have a nice GUI for this")
-        l.debug("successful logging as owner with the server")
+        log.debug("successful logging as owner with the server")
 
         self.state = 'waiting for other player'
         self.request = None
@@ -67,7 +67,7 @@ class HostGame:
 
 
     async def on_blur(self):
-        l.debug("Stop listening for requests")
+        log.debug("Stop listening for requests")
         await self.server.close()
         # self.connection.cancel()
         # self.writer.transport.abort()
@@ -77,11 +77,11 @@ class HostGame:
         # await self.writer.drain()
 
     async def listen_for_request(self):
-        l.debug("Start listening for requests")
+        log.debug("Start listening for requests")
         uuid = await readline(self.reader)
-        l.debug(f"Got uuid {uuid!r} from server.")
+        log.debug(f"Got uuid {uuid!r} from server.")
         username = await readline(self.reader)
-        l.debug(f"Got a player request ({username!r})")
+        log.debug(f"Got a player request ({username!r})")
         self.request = Request(uuid, username)
         self.state = 'got request from player'
 
@@ -91,7 +91,7 @@ class HostGame:
         self.confirmbox.calibre()
 
     def setstate(self, newvalue):
-        l.info("Change state to {!r}".format(newvalue))
+        log.info("Change state to {!r}".format(newvalue))
         self._state = newvalue
 
     state = property(lambda self: self._state, setstate)
@@ -101,19 +101,19 @@ class HostGame:
         if self.confirmbox:
             result = self.confirmbox.event(e)
             if result is True:
-                l.info("Request accecepted")
+                log.info("Request accecepted")
                 await write(self.writer, 'accepted')
                 self.confirmbox = None
                 self.state = "waiting for server green flag"
                 response = await readline(self.reader)
-                l.debug(f"Got response from server {response!r}")
+                log.debug(f"Got response from server {response!r}")
                 if response == 'select champion':
                     await self.m.focus("select champion")
                 else:
-                    l.critical(f"Got unexpected response {response!r}")
+                    log.critical(f"Got unexpected response {response!r}")
                     raise NotImplementedError("This shouldn't happen")
             elif result is False:
-                l.info("Owner declined")
+                log.info("Owner declined")
                 await write(self.writer, 'declined')
                 self.confirmbox = None
 

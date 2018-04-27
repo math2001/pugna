@@ -2,7 +2,7 @@ import pygame
 import logging
 from utils.gui import TextBox, Options
 
-l = logging.getLogger(__name__)
+log = logging.getLogger(__name__)
 
 class Username:
 

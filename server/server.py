@@ -6,7 +6,7 @@ import logging
 from collections import namedtuple
 from utils.network import *
 
-l = logging.getLogger(__name__)
+log = logging.getLogger(__name__)
 
 Client = namedtuple('Client', 'username playerstatus reader writer')
 
@@ -21,7 +21,7 @@ class Server:
         self._state = 'closed'
 
     async def start(self, port):
-        l.info("Start server")
+        log.info("Start server")
         self._state = "waiting for owner"
         self.server = await asyncio.start_server(self.handle_new_client, "", port)
 
@@ -32,7 +32,7 @@ class Server:
             client.writer.close()
 
     def setstate(self, newvalue):
-        l.info("Change state to {!r}".format(newvalue))
+        log.info("Change state to {!r}".format(newvalue))
         self._state = newvalue
 
     state = property(lambda self: self._state, setstate)
@@ -59,20 +59,20 @@ class Server:
             # don't accept any request from players when a request has already
             # been send to the owner
             # So, we tell the player the owner's busy.
-            l.debug("Send owner busy with request.")
+            log.debug("Send owner busy with request.")
             write(writer, "owner already requested")
             return
 
         if self.state == "waiting for player":
             # Here, we have a request from a player to join the onwer
             # the reader and the writer are the other player's, not the owner's
-            l.debug(f"Send requests infos to owner {uuid!r} {username!r}")
+            log.debug(f"Send requests infos to owner {uuid!r} {username!r}")
             # send the uuid and username to the owner
             await write(self.clients[self.owneruuid].writer, uuid, username)
             self.state = 'waiting for owner response'
             # wait for owner to reply
             response = await readline(self.clients[self.owneruuid].reader) 
-            l.debug(f"Response from owner {response!r}")
+            log.debug(f"Response from owner {response!r}")
             # he said yes!
             if response == 'accepted':
                 self.clients[uuid] = Client(username, PlayerPrivateStatus(),
@@ -80,7 +80,7 @@ class Server:
                 # to the client
                 await write(writer, 'accepted')
                 self.state = 'waiting for champion selection'
-                l.info("Broadcast select champion")
+                log.info("Broadcast select champion")
                 await self.broadcast('select champion')
             else:
                 self.state = 'waiting for player'
@@ -89,13 +89,13 @@ class Server:
 
         # here, state must be 'waiting for owner'
         if uuid == self.owneruuid:
-            l.debug(f"Got owner's infos: {uuid!r} {username!r}")
+            log.debug(f"Got owner's infos: {uuid!r} {username!r}")
             self.clients[uuid] = Client(username, PlayerPrivateStatus(),
                                         reader, writer)
             self.state = "waiting for player"
             await write(writer, "successful identification")
         else:
-            l.warning(f"Got fake request pretenting to be owner "
+            log.warning(f"Got fake request pretenting to be owner "
                       f"{uuid!r} {username!r}")
             await write(writer, "not owner. denied.")
             writer.close()

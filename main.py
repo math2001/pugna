@@ -11,7 +11,7 @@ from uuid import uuid4
 
 logging.basicConfig(level=logging.DEBUG, format='{asctime} {levelname:<5} {name} {message}', style='{')
 
-l = logging.getLogger(__name__)
+log = logging.getLogger(__name__)
 
 pygame.display.init()
 pygame.freetype.init()
@@ -80,7 +80,7 @@ class Manager:
             scene = getattr(scenes, scene)()
         except AttributeError:
             raise ValueError("No such scene as {!r}".format(scene))
-        l.debug("Switch scene to {!r}".format(scene.__class__.__name__))
+        log.debug("Switch scene to {!r}".format(scene.__class__.__name__))
         if hasattr(self.current, 'on_blur'):
             await self.current.on_blur()
         # self.loop.create_task(scene.on_focus(self))

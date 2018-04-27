@@ -5,7 +5,7 @@ from asyncio import open_connection
 from utils.gui import TextBox
 from utils.network import write, readline
 
-l = logging.getLogger(__name__)
+log = logging.getLogger(__name__)
 
 class JoinGame:
 
@@ -31,7 +31,7 @@ class JoinGame:
         self.labelrect.top += 70
 
     def setstate(self, newvalue):
-        l.info("Change state to {!r}".format(newvalue))
+        log.info("Change state to {!r}".format(newvalue))
         self._state = newvalue
 
     state = property(lambda self: self._state, setstate)
@@ -44,7 +44,7 @@ class JoinGame:
         await write(self.m.writer, self.m.uuid, self.m.username)
         response = await readline(self.m.reader)
         if response == 'accepted':
-            await self.m.focus("select champion")
+            aogwait self.m.focus("select champion")
         elif response == 'owner already requested':
             await self.confirm_request_again()
         elif response == 'declined':
