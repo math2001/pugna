@@ -161,29 +161,28 @@ class Button(pygame.sprite.Sprite):
         return self.__str__()
 
 
-class ConfirmBox:
+class MessageBox:
 
     """Creates a little popup
-    Place the cb.rect where you want it and render with s.blit(cb.image,
-    cb.rect)
+    Place the mb.rect where you want it and render with s.blit(mb.image,
+    mb.rect)
     Call event() with an Event and it'll return True if the user
     cliked ok and return False if the user clicked cancel.
     If you do move the rect, make sure you call calibre() after it,
     otherwise they will be off (since they are relative to the window)
     and the click detection won't work properly.
 
-    run pygame.draw.rect(s, (255, 0, 0), cb.ok.rect, 1) to see what I mean
+    run pygame.draw.rect(s, (255, 0, 0), mb.ok.rect, 1) to see what I mean
 
     """
 
     @classmethod
-    def new(cls, font, title, ok, cancel, useropt={}):
-        """A shortcut to automatically create the buttons from text"""
-        return cls(font, title, Button(font, ok), Button(font, cancel), useropt)
+    def new(cls, font, message, ok, useropt={}):
+        """A shortcut to automatically create the button from text"""
+        return cls(font, message, Button(font, ok), useropt)
 
-    def __init__(self, font, title, ok, cancel, useropt={}):
+    def __init__(self, font, message, ok, useropt={}):
         self.ok = ok
-        self.cancel = cancel
 
         opt = Options()
         opt.width = 350
@@ -202,7 +201,7 @@ class ConfirmBox:
 
         text = pygame.Surface((opt.width - opt.margin[0] * 2,
                                opt.height - opt.margin[1] * 2))
-        word_wrap(text, title, font, opt)
+        word_wrap(text, message, font, opt)
         self.image.blit(text, opt.margin)
 
         pygame.draw.rect(self.image, opt.bordercolor,
@@ -214,14 +213,39 @@ class ConfirmBox:
                               - pygame.math.Vector2(opt.margin)
         self.image.blit(ok.image, ok.rect)
 
-        cancel.rect.midright = ok.rect.midleft
-        cancel.rect.left -= 10
-        self.image.blit(cancel.image, cancel.rect)
-
     def calibre(self):
         # set button's rect absolute position to be able to detect collsion
         self.ok.rect.topleft = (self.rect.left + self.ok.rect.left, 
                                 self.rect.top + self.ok.rect.top)
+
+    def event(self, e):
+        if e.type == MOUSEBUTTONDOWN:
+            if self.ok.event(e):
+                return True
+
+    def __str__(self):
+        return f"<MessageBox {self.message!r}>"
+
+    def __repr__(self):
+        return self.__str__()
+
+class ConfirmBox(MessageBox):
+
+    @classmethod
+    def new(cls, font, message, ok, cancel, useropt={}):
+        """A shortct to automatically create the buttons from text"""
+        return cls(font, message, Button(font, ok), 
+                   Button(font, cancel), useropt)
+
+    def __init__(self, font, message, ok, cancel, useropt={}):
+        super().__init__(font, message, ok, useropt)
+        self.cancel = cancel
+        self.cancel.rect.midright = self.ok.rect.midleft
+        self.cancel.rect.left -= 10
+        self.image.blit(self.cancel.image, self.cancel.rect)
+
+    def calibre(self):
+        super().calibre()
         self.cancel.rect.topleft = (self.rect.left + self.cancel.rect.left, 
                                     self.rect.top + self.cancel.rect.top)
 
@@ -229,12 +253,8 @@ class ConfirmBox:
         if e.type == MOUSEBUTTONDOWN:
             if self.ok.event(e):
                 return True
-            if self.cancel.event(e):
+            elif self.cancel.event(e):
                 return False
 
     def __str__(self):
-        return f"<ConfirmBox {self.title!r}>"
-
-    def __repr__(self):
-        return self.__str__()
-
+        return f"<ConfirmBox {self.message!r}>"

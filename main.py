@@ -55,7 +55,6 @@ class Manager:
         self.loop.run_until_complete(self.focus(scene))
         self.loop.run_until_complete(self.run())
 
-
         # used for communicating with server
         self.writer = None
         self.reader = None
