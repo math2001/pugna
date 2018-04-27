@@ -66,6 +66,9 @@ class Manager:
         r.topleft = rect.topright
         font.render_to(surface, r, None)
 
+    def quit(self):
+        self.going = False
+
     def reset_fonts(self):
         self.uifont.fgcolor = TEXT_FG
         self.uifont.size = 20

@@ -20,7 +20,7 @@ class Menu:
                        hover_bordercolor=pygame.Color("tomato"))
         self.buttons = []
         top = self.title[1].bottom + 100
-        for s in ['Host game', 'Join game', 'About']:
+        for s in ['Host game', 'Join game', 'About', 'Quit']:
             b = Button(self.m.fancyfont, s, opts)
             b.rect.centerx = self.m.rect.centerx
             b.rect.top = top
@@ -30,8 +30,9 @@ class Menu:
     async def event(self, e):
         for btn in self.buttons:
             if btn.event(e):
+                if btn.text == "Quit":
+                    return self.m.quit()
                 await self.m.focus(btn.text)
-
 
     async def render(self):
         self.m.screen.blit(*self.title)
