@@ -63,8 +63,10 @@ class JoinGame:
             raise ValueError(f"Unexpected response from server {response!r}")
 
     async def request_declined(self):
+        log.info("Request declined by owner")
         self.messagebox = MessageBox.new(self.m.uifont,
-                "Your request was declined\nYou may try again", "OK")
+                                         "Your request was declined\n"
+                                         "You may try again", 'Ok...')
         self.messagebox.rect.center = self.m.rect.center
         self.messagebox.calibre()
         self.state = 'Waiting for user input'
@@ -73,9 +75,10 @@ class JoinGame:
         raise NotImplementedError("Display confirm popup")
 
     async def display_error(self, error):
+        log.error(f"Error occured while connecting: {error}")
         self.messagebox = MessageBox.new(self.m.uifont,
             "An error has occurred while oppening the connection\n"
-            f"{error.strerror}", "OK")
+            f"{error.strerror}", 'Oh no!', height=200)
         self.messagebox.rect.center = self.m.rect.center
         self.messagebox.calibre()
         self.state = "Waiting for user input"
