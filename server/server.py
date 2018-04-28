@@ -59,7 +59,7 @@ class Server:
     async def gui_handle_new_client(self, reader, writer):
         try:
             await self.handle_new_client(reader, writer)
-        except ClientLeft as e:
+        except CommunicateClosed as e:
             self.state = "Sending ClientLeft to other client"
             log.error(f"Client left: {e}")
             log.debug(f"Got {len(self.clients)} clients")
@@ -71,7 +71,7 @@ class Server:
                     continue
                 log.debug(f"Send to client {uuid} {client.username} {client.writer}")
                 await write(self.clients[uuid].writer, enc({
-                    "kind": "clientleft", "username": client.username}))
+                    "kind": "client left", "username": client.username}))
             self.state = 'awaiting close'
 
     async def handle_new_client(self, reader, writer):
@@ -130,6 +130,7 @@ class Server:
                 # to the client (the one that wanted to join)
                 await write(writer, {
                     'kind': 'request state change',
+                    'reason': None,
                     'accepted': True
                 })
                 return await self.hero_selection()

@@ -3,7 +3,7 @@ import logging
 from constants import PORT
 from asyncio import open_connection
 from utils.gui import TextBox, MessageBox, Button
-from utils.network import write, readline
+from utils.network import *
 
 log = logging.getLogger(__name__)
 
@@ -48,16 +48,19 @@ class JoinGame:
         await write(self.m.writer, self.m.uuid, self.m.username)
         self.m.state = "Waiting for owner's reply"
         self.submitbtn.enabled = False
-        response = await readline(self.m.reader)
-        if response == 'accepted':
+
+        res = await read(self.m, 'state', 'reason',
+                              kind='request state change')
+        if res['accepted'] is True:
             return await self.m.focus("select hero")
-        elif response == 'owner already requested':
+
+        elif res['reason'] == 'owner busy':
             raise NotImplementedError("Display hold on, owner's busy")
-        elif response == 'declined':
+        elif res['reason'] == 'owner declined':
             log.info("Request declined by owner (lol)")
             self.messagebox = MessageBox.new(self.m.uifont,
-                                         "Your request was declined\n"
-                                         "You may try again", 'Really?!')
+                                             "Your request was declined\n"
+                                             "You may try again", 'Really?!')
         else:
             log.critical(f"Unexpected response from server {response!r}")
             self.messagebox = MessageBox.new(self.m.uifont,
