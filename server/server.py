@@ -39,7 +39,7 @@ class Server:
         self.server.close()
 
     def setstate(self, newvalue):
-        log.info("Change state to {!r}".format(newvalue))
+        log.info(f'Server{{{newvalue}}}')
         self._state = newvalue
 
     state = property(lambda self: self._state, setstate)

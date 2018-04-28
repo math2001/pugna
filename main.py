@@ -57,6 +57,8 @@ class Manager:
         self.menubtn.rect.top += 5
         self.menubtn.rect.left += 5
 
+        self.state = 'Starting app'
+
         self.loop = asyncio.get_event_loop()
         self.loop.run_until_complete(self.focus(scene))
         self.loop.run_until_complete(self.run())
@@ -117,6 +119,12 @@ class Manager:
             # give control back to the event loop, so that other tasks can run
             await asyncio.sleep(0)
             pygame.display.flip()
+
+    def setstate(self, value):
+        log.info(f"{self.current.__class__.__name__}{{{value}}}")
+        self._state = value
+
+    state = property(lambda self: self._state, setstate)
 
 os.environ["SDL_VIDEO_CENTERED"] = "1"
 

@@ -11,7 +11,7 @@ class JoinGame:
 
     async def on_focus(self, manager):
         self.m = manager
-        self.state = 'Waiting for user input'
+        self.m.state = 'Waiting for user input'
 
         self.messagebox = None
 
@@ -38,21 +38,15 @@ class JoinGame:
         self.submitbtn.rect.midleft = self.textbox.rect.midright
         self.submitbtn.rect.left += 10
 
-    def setstate(self, newvalue):
-        log.info("Change state to {!r}".format(newvalue))
-        self._state = newvalue
-
-    state = property(lambda self: self._state, setstate)
-
     async def send_request(self, ip):
-        self.state = 'Opening connection'
+        self.m.state = 'Opening connection'
         try:
             self.m.reader, self.m.writer = await open_connection(ip, PORT,
                     loop=self.m.loop)
         except (ConnectionRefusedError, OSError) as e:
             return await self.display_error(e)
         await write(self.m.writer, self.m.uuid, self.m.username)
-        self.state = "Waiting for owner's reply"
+        self.m.state = "Waiting for owner's reply"
         response = await readline(self.m.reader)
         if response == 'accepted':
             await self.m.focus("select hero")
@@ -70,7 +64,7 @@ class JoinGame:
                                          "You may try again", 'Ok...')
         self.messagebox.rect.center = self.m.rect.center
         self.messagebox.calibre()
-        self.state = 'Waiting for user input'
+        self.m.state = 'Waiting for user input'
 
     async def confirm_request_again(self):
         raise NotImplementedError("Display hold on, owner's busy")
@@ -82,7 +76,7 @@ class JoinGame:
             f"{error.strerror}", 'Oh no!', height=200)
         self.messagebox.rect.center = self.m.rect.center
         self.messagebox.calibre()
-        self.state = "Waiting for user input"
+        self.m.state = "Waiting for user input"
 
     async def event(self, e):
         if self.messagebox:
@@ -100,7 +94,7 @@ class JoinGame:
         self.submitbtn.render(self.m.screen)
 
         self.m.uifont.origin = True
-        r = self.m.uifont.get_rect(self.state)
+        r = self.m.uifont.get_rect(self.m.state)
         r.midbottom = self.m.rect.centerx, self.m.rect.bottom - 10
         self.m.uifont.render_to(self.m.screen, r, None)
 

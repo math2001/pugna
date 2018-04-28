@@ -27,18 +27,18 @@ class HostGame:
 
         self.server = server.Server(self.m.uuid, self.m.username, self.m.loop)
 
-        self.state = "Creating server"
+        self.m.state = "Creating server"
 
         await self.server.start(PORT)
 
-        self.state = 'Opening connection with server'
+        self.m.state = 'Opening connection with server'
 
         self.m.loop.create_task(self.connect_to_server())
 
     async def connect_to_server(self):
         self.m.reader, self.m.writer = await asyncio.open_connection(
             "127.0.0.1", PORT, loop=self.m.loop)
-        self.state = "Identifying"
+        self.m.state = "Identifying"
 
         log.debug("Send ids to the server")
 
@@ -61,13 +61,12 @@ class HostGame:
 
     async def on_blur(self, next_scene):
         if next_scene.__class__.__name__ == "Menu":
-            log.info("Shutdown server")
             await self.server.close()
 
     async def listen_for_request(self):
         self.request = None
         self.confirmbox = None
-        self.state = 'Waiting for an other player to join'
+        self.m.state = 'Waiting for an other player to join'
 
         log.debug("Start listening for requests")
         uuid = await readline(self.m.reader)
@@ -75,7 +74,7 @@ class HostGame:
         username = await readline(self.m.reader)
         log.debug(f"Got a player request ({username!r})")
         self.request = Request(uuid, username)
-        self.state = 'Got request from player'
+        self.m.state = 'Got request from player'
 
         self.confirmbox = ConfirmBox.new(self.m.uifont,
                                          f"{username} wants to play with you!",
@@ -90,7 +89,7 @@ class HostGame:
                 log.info("Request accecepted")
                 await write(self.m.writer, 'accepted')
                 self.confirmbox = None
-                self.state = "Waiting for server green flag"
+                self.m.state = "Waiting for server green flag"
                 response = await readline(self.m.reader)
                 log.debug(f"Got response from server {response!r}")
                 if response == 'select hero':
@@ -130,7 +129,7 @@ class HostGame:
             self.m.screen.blit(s, r)
 
         self.m.uifont.origin = True
-        r = self.m.uifont.get_rect(self.state)
+        r = self.m.uifont.get_rect(self.m.state)
         r.midbottom = self.m.rect.centerx, self.m.rect.bottom - 10
         self.m.uifont.render_to(self.m.screen, r, None)
 
@@ -138,11 +137,5 @@ class HostGame:
 
         if self.confirmbox:
             self.confirmbox.render(self.m.screen)
-
-    def setstate(self, newvalue):
-        log.info("Change state to {!r}".format(newvalue))
-        self._state = newvalue
-
-    state = property(lambda self: self._state, setstate)
 
 
