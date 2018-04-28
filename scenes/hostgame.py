@@ -25,21 +25,19 @@ class HostGame:
 
         self.initrender()
 
-        self.animdots = 0
-
         self.server = server.Server(self.m.uuid, self.m.username, self.m.loop)
 
         self.state = "Creating server"
 
-        self.connection = await self.server.start(PORT)
+        await self.server.start(PORT)
 
         self.state = 'Opening connection with server'
 
         self.m.loop.create_task(self.connect_to_server())
 
     async def connect_to_server(self):
-        self.reader, self.writer = await asyncio.open_connection("127.0.0.1",
-                                            PORT, loop=self.m.loop)
+        self.m.reader, self.m.writer = await asyncio.open_connection(
+            "127.0.0.1", PORT, loop=self.m.loop)
         self.state = "Identifying"
 
         log.debug("Send ids to the server")
@@ -47,10 +45,10 @@ class HostGame:
         # send uuid and username to the server so that he knows we are the
         # owner. We then have a connection established and server can talk to
         # us.
-        await write(self.writer, self.m.uuid)
-        await write(self.writer, self.m.username)
+        await write(self.m.writer, self.m.uuid)
+        await write(self.m.writer, self.m.username)
 
-        answer = await readline(self.reader)
+        answer = await readline(self.m.reader)
         if answer != "successful identification":
             # can't be bothered to do that right now since it is very unlikely
             # to happen
@@ -65,11 +63,11 @@ class HostGame:
         log.debug("Stop listening for requests")
         await self.server.close()
         # self.connection.cancel()
-        # self.writer.transport.abort()
-        # self.writer.close()
+        # self.m.writer.transport.abort()
+        # self.m.writer.close()
         # self.listener.cancel()
-        # self.writer.write_eof()
-        # await self.writer.drain()
+        # self.m.writer.write_eof()
+        # await self.m.writer.drain()
 
     async def listen_for_request(self):
         self.request = None
@@ -77,9 +75,9 @@ class HostGame:
         self.state = 'Waiting for an other player to join'
 
         log.debug("Start listening for requests")
-        uuid = await readline(self.reader)
+        uuid = await readline(self.m.reader)
         log.debug(f"Got uuid {uuid!r} from server.")
-        username = await readline(self.reader)
+        username = await readline(self.m.reader)
         log.debug(f"Got a player request ({username!r})")
         self.request = Request(uuid, username)
         self.state = 'Got request from player'
@@ -95,10 +93,10 @@ class HostGame:
             result = self.confirmbox.event(e)
             if result is True:
                 log.info("Request accecepted")
-                await write(self.writer, 'accepted')
+                await write(self.m.writer, 'accepted')
                 self.confirmbox = None
                 self.state = "Waiting for server green flag"
-                response = await readline(self.reader)
+                response = await readline(self.m.reader)
                 log.debug(f"Got response from server {response!r}")
                 if response == 'select hero':
                     await self.m.focus("select hero")
@@ -106,7 +104,7 @@ class HostGame:
                     log.critical(f"Got unexpected response {response!r}")
                     raise NotImplementedError("This shouldn't happen")
             elif result is False:
-                await write(self.writer, 'declined')
+                await write(self.m.writer, 'declined')
                 self.listener = self.m.loop.create_task(
                                 self.listen_for_request())
 

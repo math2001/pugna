@@ -28,7 +28,7 @@ class Server:
 
     async def start(self, port):
         log.info("Start server")
-        self._state = "waiting for owner"
+        self.state = "waiting for owner"
         self.server = await asyncio.start_server(self.handle_new_client, "", port)
 
     async def close(self):
@@ -91,6 +91,7 @@ class Server:
             else:
                 self.state = 'waiting for player'
                 await write(writer, "declined")
+                # start all over again
                 self.loop.create_task(self.handle_new_client(reader, writer))
             return
 
