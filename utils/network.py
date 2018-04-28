@@ -19,12 +19,12 @@ async def read(client, *requiredkeys, kind=None):
         raise CommunicationClosed(f"Client {client} left.", client)
     res = dec(res)
     if not isinstance(res, dict) \
-        or not all(k in res for k in requiredkeys + ['kind']):
+        or not all(k in res for k in requiredkeys + ('kind', )):
         await write(client.writer, {'kind': 'error', 'from': 'client',
                                     'reason': 'invalid informations',
                                     'requiredkeys': requiredkeys})
         raise ValueError("Got invalid informations")
-    if kidn is not None and res['kind'] != kind:
+    if kind is not None and res['kind'] != kind:
         raise ValueError(f"Invalid kind for the reply. Got {res['kind']!r}, "
                          f"expetected {kind!r}")
     return res

@@ -105,9 +105,9 @@ class Server:
             # been send to the owner
             # So, we tell the player the owner's busy.
             log.debug("Send owner busy with request.")
-            await write(writer, {'kind': 'request state change',
-                                 'state': 'declined',
-                                 'reason': 'owner busy'})
+            await write(self.clients[uuid], {'kind': 'request state change',
+                                             'state': 'declined',
+                                             'reason': 'owner busy'})
             del self.clients[uuid]
             return
 
@@ -116,11 +116,9 @@ class Server:
             # the reader and the writer are the other player's, not the owner's
             log.debug(f"Send requests infos to owner {uuid!r} {username!r}")
             # send the uuid and username to the owner
-            await write(self.clients[self.owneruuid].writer, {
-                'kind': 'new request',
-                'uuid': uuid,
-                'username': username
-            })
+            await write(self.clients[self.owneruuid], {'kind': 'new request',
+                                                       'uuid': uuid,
+                                                       'username': username})
             self.state = 'waiting for owner response'
             # wait for owner to reply
             res = await read(self.clients[self.owneruuid], 'accepted',
@@ -129,7 +127,7 @@ class Server:
             # he said yes!
             if res['accepted'] is True:
                 # to the client (the one that wanted to join)
-                await write(writer, {
+                await write(self.clients[uuid], {
                     'kind': 'request state change',
                     'reason': None,
                     'accepted': True
@@ -140,9 +138,9 @@ class Server:
                     log.error("Got unexpected value for response to request"
                               f"{res['accepted']!r} (expecting a bool)")
                 self.state = 'waiting for player'
-                await write(writer, {'kind': 'request state change',
-                                     'accepted': False,
-                                     'reason': 'owner declined'})
+                await write(self.clients[uuid], {'kind': 'request state change',
+                                                 'accepted': False,
+                                                 'reason': 'owner declined'})
                 del self.clients[uuid]
                 # start all over again
                 self.loop.create_task(self.handle_new_client(reader, writer))
@@ -151,13 +149,17 @@ class Server:
         # here, state must be 'waiting for owner'
         if uuid == self.owneruuid:
             self.state = "waiting for player"
-            await write(writer, {'kind': 'identification state change',
-                                 'state': 'success'})
+            await write(self.clients[uuid], {
+                'kind': 'identification state change',
+                'state': 'success'
+            })
         else:
             log.warning(f"Got fake request pretenting to be owner "
                         f"{uuid!r} {username!r}")
-            await write(writer, {'kind': 'identification state change',
-                                 'state': 'failed'})
+            await write(self.clients[uuid], {
+                'kind': 'identification state change',
+                'state': 'failed'
+            })
             writer.write_eof()
             await writer.drain()
             writer.close()
