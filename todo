@@ -1,8 +1,7 @@
-Before implementing hero selection, all of this must be done:
-
 - properly handle connections error
     - client leave (warn others)
     - properly close client connections
     - server shutdown
 
 - reject player while owner hasn't been logged in
+- handle errors while creating server

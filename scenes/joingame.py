@@ -47,27 +47,27 @@ class JoinGame:
             return await self.display_error(e)
         await write(self.m.writer, self.m.uuid, self.m.username)
         self.m.state = "Waiting for owner's reply"
+        self.submitbtn.enabled = False
         response = await readline(self.m.reader)
         if response == 'accepted':
-            await self.m.focus("select hero")
+            return await self.m.focus("select hero")
         elif response == 'owner already requested':
-            await self.confirm_request_again()
+            raise NotImplementedError("Display hold on, owner's busy")
         elif response == 'declined':
-            await self.request_declined()
-        else:
-            raise ValueError(f"Unexpected response from server {response!r}")
-
-    async def request_declined(self):
-        log.info("Request declined by owner")
-        self.messagebox = MessageBox.new(self.m.uifont,
+            log.info("Request declined by owner (lol)")
+            self.messagebox = MessageBox.new(self.m.uifont,
                                          "Your request was declined\n"
-                                         "You may try again", 'Ok...')
+                                         "You may try again", 'Really?!')
+        else:
+            log.critical(f"Unexpected response from server {response!r}")
+            self.messagebox = MessageBox.new(self.m.uifont,
+                "Recieved an unexpected response from the server (see log)\n"
+                "Please try again."
+                "Hum... Ok")
+        self.submitbtn.enabled = True
         self.messagebox.rect.center = self.m.rect.center
         self.messagebox.calibre()
         self.m.state = 'Waiting for user input'
-
-    async def confirm_request_again(self):
-        raise NotImplementedError("Display hold on, owner's busy")
 
     async def display_error(self, error):
         log.error(f"Error occured while connecting: {error}")
