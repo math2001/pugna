@@ -55,7 +55,7 @@ class SelectHero:
         self.allcardsrect = self.allcards.get_rect(centerx=self.m.rect.centerx)
         self.allcardsrect.top = self.titlerect.bottom + 40
 
-        self.scrollspeed = 5
+        self.scrollspeed = 10
         self.originaltop = self.allcardsrect.top
 
         top = 0
@@ -106,5 +106,6 @@ class SelectHero:
         self.m.screen.set_clip(self.clip)
         self.m.screen.blit(self.allcards, self.allcardsrect)
         if self.hovered:
-            pygame.draw.rect(self.m.screen, pygame.Color('red'), self.hovered, 1)
+            pygame.draw.rect(self.m.screen, pygame.Color('tomato'),
+                             self.hovered, 1)
         self.m.screen.set_clip(None)
