@@ -11,19 +11,7 @@ class SelectHero:
 
     async def on_focus(self, manager):
         self.m = manager
-        # heros_description = dec(await readline(self.m.reader))
-        heros_description = {
-            "first": "wqer pweproi qnasdf qko anadf af pnapfdaf ",
-            "second": "foasdfasdf",
-            "third": "third third",
-            "fourth": "tests",
-            "fifth": "adsfpqwef adsf akjds fn[wqefkjdfnpqekrngj skdfjnu] sadfpadskj afdnasfiunwqefjnadfkjn df aune pernd sg puhreg sdfv",
-            "asdfasdf": "wqer pweproi qnasdf qko anadf af pnapfdaf ",
-            "wqer": "wqer pweproi qnasdf qko anadf af pnapfdaf ",
-            "kmasd": "wqer pweproi qnasdf qko anadf af pnapfdaf ",
-            "weqrqwer": "wqer pweproi qnasdf qko anadf af pnapfdaf ",
-        }
-
+        heros_description = dec(await readline(self.m.reader))
         rect = self.m.fancyfont.get_rect("Who are you?")
         self.title, self.titlerect = self.m.fancyfont.render("Who are you",
                                                              size=60)

@@ -75,7 +75,7 @@ class Button(GuiElement):
         opt = Options()
         opt.margin = 30, 20
         opt.thickness = 1
-        opt.bordercolor = pygame.Color(10, 10, 10)
+        opt.bordercolor = pygame.Color(20, 20, 20)
         opt.fgcolor = font.fgcolor
         opt.bgcolor = None
         opt.fontsize = font.size
