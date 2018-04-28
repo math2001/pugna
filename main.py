@@ -85,10 +85,9 @@ class Manager:
             scene = getattr(scenes, scene)()
         except AttributeError:
             raise ValueError("No such scene as {!r}".format(scene))
-        log.debug("Switch scene to {!r}".format(scene.__class__.__name__))
+        log.info("Scene: {!r}".format(scene.__class__.__name__))
         if hasattr(self.current, 'on_blur'):
-            await self.current.on_blur()
-        # self.loop.create_task(scene.on_focus(self))
+            await self.current.on_blur(scene)
         await scene.on_focus(self)
         self.current = scene
 

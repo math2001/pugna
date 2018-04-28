@@ -59,15 +59,10 @@ class HostGame:
 
         self.listener = self.m.loop.create_task(self.listen_for_request())
 
-    async def on_blur(self):
-        log.debug("Stop listening for requests")
-        await self.server.close()
-        # self.connection.cancel()
-        # self.m.writer.transport.abort()
-        # self.m.writer.close()
-        # self.listener.cancel()
-        # self.m.writer.write_eof()
-        # await self.m.writer.drain()
+    async def on_blur(self, next_scene):
+        if next_scene.__class__.__name__ == "Menu":
+            log.info("Shutdown server")
+            await self.server.close()
 
     async def listen_for_request(self):
         self.request = None
