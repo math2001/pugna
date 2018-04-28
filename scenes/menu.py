@@ -17,7 +17,7 @@ class Menu:
 
         opts = Options(thickness=1, width=300, height=60,
                        hover_fgcolor=TEXT_HOVER_FG,
-                       hover_bordercolor=pygame.Color("tomato"))
+                       hover_bordercolor=pygame.Color("darkgrey"))
         self.buttons = []
         top = self.title[1].bottom + 100
         for s in ['Host game', 'Join game', 'About', 'Quit']:
