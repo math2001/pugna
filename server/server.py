@@ -29,13 +29,20 @@ class Server:
 
     async def start(self, port):
         try:
-            self.server = await asyncio.start_server(self.handle_new_client, "",
-                                                     port)
+            self.server = await asyncio.start_server(
+                self.gui_handle_new_client, "", port)
         except OSError as e:
             return e
         self.state = "waiting for owner"
 
     async def close(self):
+        if self.state == 'closed':
+            return
+        if self.state != 'awaiting close':
+            # wait for the server to be ready to be closed
+            await asyncio.sleep(.1)
+            await self.close()
+            return
         self.state = "closed"
         for client in self.clients.values():
             client.writer.write_eof()
@@ -49,6 +56,24 @@ class Server:
         self._state = newvalue
 
     state = property(lambda self: self._state, setstate)
+
+    async def gui_handle_new_client(self, reader, writer):
+        try:
+            await self.handle_new_client(reader, writer)
+        except ClientLeft as e:
+            self.state = "Sending ClientLeft to other client"
+            log.error(f"Client left: {e}")
+            log.debug(f"Got {len(self.clients)} clients")
+            # send message to other player
+            for uuid, client in self.clients.items():
+                if client.reader is e.reader:
+                    # this is the client who left, don't send him anything
+                    log.debug(f'skip {uuid} {client.username}')
+                    continue
+                log.debug(f"Send to client {uuid} {client.username} {client.writer}")
+                await write(self.clients[uuid].writer, enc({
+                    "kind": "clientleft", "username": client.username}))
+            self.state = 'awaiting close'
 
     async def handle_new_client(self, reader, writer):
         """Handle new client depending on the state
@@ -65,8 +90,16 @@ class Server:
         send 'Choose hero' to both the other player and the owner.
         """
 
-        uuid = (await readline(reader))
-        username = (await readline(reader))
+
+        log.debug("Got brand new client!")
+
+        uuid = await readline(reader)
+        log.debug(f"Uuid {uuid}")
+        username = await readline(reader)
+        log.debug(f"Username {username}")
+
+        self.clients[uuid] = Client(username, PlayerPrivateStatus(), reader,
+                                    writer)
 
         if self.state == 'waiting for owner response':
             # don't accept any request from players when a request has already
@@ -74,6 +107,7 @@ class Server:
             # So, we tell the player the owner's busy.
             log.debug("Send owner busy with request.")
             await write(writer, "owner already requested")
+            del self.clients[uuid]
             return
 
         if self.state == "waiting for player":
@@ -88,14 +122,13 @@ class Server:
             log.debug(f"Response from owner {response!r}")
             # he said yes!
             if response == 'accepted':
-                self.clients[uuid] = Client(username, PlayerPrivateStatus(),
-                                            reader, writer)
                 # to the client
                 await write(writer, 'accepted')
                 return await self.hero_selection()
             else:
                 self.state = 'waiting for player'
                 await write(writer, "declined")
+                del self.clients[uuid]
                 # start all over again
                 self.loop.create_task(self.handle_new_client(reader, writer))
             return
@@ -103,8 +136,6 @@ class Server:
         # here, state must be 'waiting for owner'
         if uuid == self.owneruuid:
             log.debug(f"Got owner's infos: {uuid!r} {username!r}")
-            self.clients[uuid] = Client(username, PlayerPrivateStatus(),
-                                        reader, writer)
             self.state = "waiting for player"
             await write(writer, "successful identification")
         else:

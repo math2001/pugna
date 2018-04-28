@@ -78,6 +78,9 @@ class HostGame:
 
     async def on_blur(self, next_scene):
         if next_scene.__class__.__name__ == "Menu":
+            self.m.writer.write_eof()
+            await self.m.writer.drain()
+            self.m.writer.close()
             await self.server.close()
 
     async def listen_for_request(self):

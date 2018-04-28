@@ -1,7 +1,16 @@
 from json import JSONDecoder
 
+class ClientLeft(Exception):
+
+    def __init__(self, msg, reader):
+        self.msg = msg
+        self.reader = reader
+
 async def readline(reader):
-    return (await reader.readline()).decode('utf-8').strip()
+    result = (await reader.readline()).decode('utf-8')
+    if not result:
+        raise ClientLeft("A client left", reader)
+    return result.strip()
 
 
 async def write(writer, *lines, drain=True):
