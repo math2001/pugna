@@ -47,11 +47,12 @@ class JoinGame:
     async def send_request(self, ip):
         self.state = 'Opening connection'
         try:
-            self.m.reader, self.m.writer = await open_connection(ip, PORT)
+            self.m.reader, self.m.writer = await open_connection(ip, PORT,
+                    loop=self.m.loop)
         except (ConnectionRefusedError, OSError) as e:
             return await self.display_error(e)
-        self.state = "Waiting for owner"
         await write(self.m.writer, self.m.uuid, self.m.username)
+        self.state = "Waiting for owner's reply"
         response = await readline(self.m.reader)
         if response == 'accepted':
             await self.m.focus("select hero")
@@ -72,7 +73,7 @@ class JoinGame:
         self.state = 'Waiting for user input'
 
     async def confirm_request_again(self):
-        raise NotImplementedError("Display confirm popup")
+        raise NotImplementedError("Display hold on, owner's busy")
 
     async def display_error(self, error):
         log.error(f"Error occured while connecting: {error}")
@@ -89,7 +90,7 @@ class JoinGame:
                 self.messagebox = None
             return # prevent input is message box present
         if self.textbox.event(e) or self.submitbtn.event(e):
-            await self.send_request(self.textbox.text)
+            self.m.loop.create_task(self.send_request(self.textbox.text))
 
     async def render(self):
         self.m.screen.blit(self.title, self.titlerect)
