@@ -1,4 +1,4 @@
-from json import JSONDecoder
+from json import JSONDecoder, JSONEncoder
 
 dec = JSONDecoder().decode
 end = JSONEncoder().encode
@@ -9,9 +9,10 @@ class CommunicationClosed(Exception):
         self.msg = msg
         self.client = client
 
-async def read(self, client, *requiredkeys):
+async def read(self, client, *requiredkeys, kind=None):
     """Checks if a req has the required keys, and reply with an error and
     raises an exception. Otherwise, it simply returns the request
+    clients just needs to have a reader and writer
     """
 
     res = (await client.reader.readline()).decode('utf-8')
@@ -24,6 +25,9 @@ async def read(self, client, *requiredkeys):
                                     'reason': 'invalid informations',
                                     'requiredkeys': requiredkeys})
         raise ValueError("Got invalid informations")
+    if kidn is not None and res['kind'] != kind:
+        raise ValueError(f"Invalid kind for the reply. Got {res['kind']!r}, "
+                         f"expetected {kind!r}")
     return res
 
 

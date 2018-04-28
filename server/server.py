@@ -3,8 +3,10 @@ import sys
 import os
 import logging
 from collections import namedtuple
+
 if __name__ == "__main__":
     sys.path.append(os.getcwd())
+
 from utils.network import *
 from .heros import HEROS, HEROS_DESCRIPTION
 
@@ -115,33 +117,30 @@ class Server:
             # send the uuid and username to the owner
             await write(self.clients[self.owneruuid].writer, {
                 'kind': 'new request',
-                'from': {
-                    'uuid': uuid,
-                    'username': username
-                },
+                'uuid': uuid,
+                'username': username
             })
             self.state = 'waiting for owner response'
             # wait for owner to reply
-            res = await read(self.clients[self.owneruuid], 'accepted')
+            res = await read(self.clients[self.owneruuid], 'accepted',
+                             kind='request state change')
             log.debug(f"Response from owner {res!r}")
             # he said yes!
             if res['accepted'] is True:
-                # to the client
+                # to the client (the one that wanted to join)
                 await write(writer, {
                     'kind': 'request state change',
-                    'state': 'accepted',
+                    'accepted': True
                 })
                 return await self.hero_selection()
             else:
-                if res['accepted'] not is False:
+                if res['accepted'] is not False:
                     log.error("Got unexpected value for response to request"
                               f"{res['accepted']!r} (expecting a bool)")
                 self.state = 'waiting for player'
-                await write(writer, {
-                    'kind': 'request state change',
-                    'state': 'declined'
-                    'reason': 'owner declined'
-                })
+                await write(writer, {'kind': 'request state change',
+                                     'accepted': False,
+                                     'reason': 'owner declined'})
                 del self.clients[uuid]
                 # start all over again
                 self.loop.create_task(self.handle_new_client(reader, writer))
@@ -150,17 +149,13 @@ class Server:
         # here, state must be 'waiting for owner'
         if uuid == self.owneruuid:
             self.state = "waiting for player"
-            await write(writer, {
-                'kind': 'identification state change',
-                'state': 'success'
-            })
+            await write(writer, {'kind': 'identification state change',
+                                 'state': 'success'})
         else:
             log.warning(f"Got fake request pretenting to be owner "
                         f"{uuid!r} {username!r}")
-            await write(writer, {
-                'kind': 'identification state change',
-                'state': 'failed'
-            })
+            await write(writer, {'kind': 'identification state change',
+                                 'state': 'failed'})
             writer.write_eof()
             await writer.drain()
             writer.close()

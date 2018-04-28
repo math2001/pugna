@@ -58,23 +58,20 @@ class HostGame:
         # send uuid and username to the server so that he knows we are the
         # owner. We then have a connection established and the server can talk
         # to us.
-        await write(self.m.writer, {
+        await write(self.m, {
             'kind': 'identification',
             'uuid': self.m.uuid,
             'username': self.m.username
         })
 
-        res = await read(self.m, 'identification state change')
-        answer = await readline(self.m.reader)
-        if answer != "successful identification":
-            # can't be bothered to do that right now since it is very unlikely
-            # to happen
-            log.critical("Unexpected answer while "
-                       "identifying {!r}".format(answer))
+        res = await read(self.m, 'state', kind='identification')
+        if res['state'] != "successful":
+            # TODO: implement gui
+            log.critical(f"Unexpected answer while identifying {answer!r}")
             raise NotImplementedError("Need to have a nice GUI for this")
         log.debug("successful logging as owner with the server")
 
-        self.listener = self.m.loop.create_task(self.listen_for_request())
+        self.m.loop.create_task(self.listen_for_request())
 
     async def on_blur(self, next_scene):
         if next_scene.__class__.__name__ == "Menu":
@@ -87,12 +84,7 @@ class HostGame:
         self.request = None
         self.m.state = 'Waiting for an other player to join'
 
-        log.debug("Start listening for requests")
-        uuid = await readline(self.m.reader)
-        log.debug(f"Got uuid {uuid!r} from server.")
-        username = await readline(self.m.reader)
-        log.debug(f"Got a player request ({username!r})")
-        self.request = Request(uuid, username)
+        self.request = await read(self.m, 'uuid', 'username', kind='new request')
         self.m.state = 'Got request from player'
 
         self.confirmbox = ConfirmBox.new(self.m.uifont,
@@ -104,24 +96,31 @@ class HostGame:
     async def event(self, e):
         if self.messagebox and self.messagebox.event(e):
             return await self.m.focus("Menu")
+
         if self.confirmbox:
             result = self.confirmbox.event(e)
             if result is True:
                 log.info("Request accecepted")
-                await write(self.m.writer, 'accepted')
+                await write(self.m, {
+                    'kind': 'request state change',
+                    'accepted': True
+                })
                 self.confirmbox = None
                 self.m.state = "Waiting for server green flag"
-                response = await readline(self.m.reader)
+                response = await read(self.m, 'state',
+                                      kind='request state change')
+
                 log.debug(f"Got response from server {response!r}")
-                if response == 'select hero':
+                if response['state'] is True:
                     await self.m.focus("select hero")
                 else:
-                    log.critical(f"Got unexpected response {response!r}")
+                    log.critical(f"Got unexpected response's state "
+                                 f"{response!r}")
                     raise NotImplementedError("This shouldn't happen")
             elif result is False:
-                await write(self.m.writer, 'declined')
-                self.listener = self.m.loop.create_task(
-                                self.listen_for_request())
+                await write(self.m, {'kind': 'request state change',
+                                     'accepted': False})
+                self.m.loop.create_task(self.listen_for_request())
 
 
     def initrender(self):
