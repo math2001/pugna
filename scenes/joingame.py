@@ -2,7 +2,7 @@ import pygame
 import logging
 from constants import PORT
 from asyncio import open_connection
-from utils.gui import TextBox, MessageBox
+from utils.gui import TextBox, MessageBox, Button
 from utils.network import write, readline
 
 log = logging.getLogger(__name__)
@@ -12,8 +12,6 @@ class JoinGame:
     async def on_focus(self, manager):
         self.m = manager
         self.state = 'Waiting for user input'
-        self.textbox = TextBox(self.m.uifont)
-        self.textbox.focused = True
 
         self.messagebox = None
 
@@ -27,10 +25,18 @@ class JoinGame:
         self.titlerect.midtop = self.m.rect.centerx, 50
 
         self.label, self.labelrect = \
-                self.m.uifont.render("Enter the host's IP and press Enter")
+                self.m.uifont.render("Enter the host's IP")
 
         self.labelrect.midtop = self.titlerect.midbottom
         self.labelrect.top += 70
+
+        # default for dev
+        self.textbox = TextBox(self.m.uifont, initialtext="127.0.0.1")
+        self.textbox.rect.midtop = (self.labelrect.centerx,
+                                    self.labelrect.bottom + 10)
+        self.submitbtn = Button(self.m.uifont, "Send request")
+        self.submitbtn.rect.midleft = self.textbox.rect.midright
+        self.submitbtn.rect.left += 10
 
     def setstate(self, newvalue):
         log.info("Change state to {!r}".format(newvalue))
@@ -75,20 +81,19 @@ class JoinGame:
         self.state = "Waiting for user input"
 
     async def event(self, e):
-        if self.textbox.event(e):
-            await self.send_request(self.textbox.text)
         if self.messagebox:
             if self.messagebox.event(e):
                 self.messagebox = None
+            return # prevent input is message box present
+        if self.textbox.event(e) or self.submitbtn.event(e):
+            await self.send_request(self.textbox.text)
 
     async def render(self):
         self.m.screen.blit(self.title, self.titlerect)
         self.m.screen.blit(self.label, self.labelrect)
 
-        s, r = self.textbox.render()
-        r.midtop = self.labelrect.midbottom
-        r.top += 10
-        self.m.screen.blit(s, r)
+        self.textbox.render(self.m.screen)
+        self.submitbtn.render(self.m.screen)
 
         self.m.uifont.origin = True
         r = self.m.uifont.get_rect(self.state)

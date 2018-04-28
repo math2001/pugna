@@ -6,5 +6,3 @@ Before implementing hero selection, all of this must be done:
     - server shutdown
 
 - reject player while owner hasn't been logged in
-- add delay before being able to try requesting again after being declined
-- don't feed input when modal present @ joingame
