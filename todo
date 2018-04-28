@@ -3,5 +3,14 @@
     - properly close client connections
     - server shutdown
 
-- reject player while owner hasn't been logged in
-- handle errors while creating server
+- have the ability to use a custom port
+    Ask to raise an issue if it's the case
+
+
+Hero names:
+
+- Julian
+- Diana
+- Stella
+- Baen
+- Caela

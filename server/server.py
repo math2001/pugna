@@ -25,10 +25,15 @@ class Server:
         self.clients = {}
         self._state = 'closed'
         self.loop = loop
+        self.server = None
 
     async def start(self, port):
+        try:
+            self.server = await asyncio.start_server(self.handle_new_client, "",
+                                                     port)
+        except OSError as e:
+            return e
         self.state = "waiting for owner"
-        self.server = await asyncio.start_server(self.handle_new_client, "", port)
 
     async def close(self):
         self.state = "closed"
@@ -36,7 +41,8 @@ class Server:
             client.writer.write_eof()
             await client.writer.drain()
             client.writer.close()
-        self.server.close()
+        if self.server:
+            self.server.close()
 
     def setstate(self, newvalue):
         log.info(f'Server{{{newvalue}}}')

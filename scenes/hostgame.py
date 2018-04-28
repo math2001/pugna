@@ -7,7 +7,7 @@ import asyncio
 from collections import namedtuple
 from constants import PORT
 from utils.network import *
-from utils.gui import ConfirmBox
+from utils.gui import ConfirmBox, MessageBox
 
 log = logging.getLogger(__name__)
 
@@ -23,17 +23,34 @@ class HostGame:
         self.m = manager
         self.localip = gethostbyname(gethostname())
 
+        self.messagebox = None
+        self.confirmbox = None
+
         self.initrender()
 
         self.server = server.Server(self.m.uuid, self.m.username, self.m.loop)
 
         self.m.state = "Creating server"
-
-        await self.server.start(PORT)
+        if await self.start_server() is False:
+            # couldn't create the server
+            return
 
         self.m.state = 'Opening connection with server'
 
         self.m.loop.create_task(self.connect_to_server())
+
+    async def start_server(self):
+        error = await self.server.start(PORT)
+        if error is None:
+            return True
+
+        self.messagebox = MessageBox.new(self.m.uifont,
+                "Couldn't start the server. Remember, you can only host one "
+                f"game at a time.\n\n{error}", "OK", height=250)
+        self.messagebox.rect.center = self.m.rect.center
+        self.messagebox.calibre()
+        return False
+
 
     async def connect_to_server(self):
         self.m.reader, self.m.writer = await asyncio.open_connection(
@@ -65,7 +82,6 @@ class HostGame:
 
     async def listen_for_request(self):
         self.request = None
-        self.confirmbox = None
         self.m.state = 'Waiting for an other player to join'
 
         log.debug("Start listening for requests")
@@ -83,6 +99,8 @@ class HostGame:
         self.confirmbox.calibre()
 
     async def event(self, e):
+        if self.messagebox and self.messagebox.event(e):
+            return await self.m.focus("Menu")
         if self.confirmbox:
             result = self.confirmbox.event(e)
             if result is True:
@@ -138,4 +156,6 @@ class HostGame:
         if self.confirmbox:
             self.confirmbox.render(self.m.screen)
 
+        if self.messagebox:
+            self.messagebox.render(self.m.screen)
 
