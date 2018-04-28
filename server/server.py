@@ -63,7 +63,7 @@ class Server:
             # been send to the owner
             # So, we tell the player the owner's busy.
             log.debug("Send owner busy with request.")
-            write(writer, "owner already requested")
+            await write(writer, "owner already requested")
             return
 
         if self.state == "waiting for player":
@@ -74,7 +74,7 @@ class Server:
             await write(self.clients[self.owneruuid].writer, uuid, username)
             self.state = 'waiting for owner response'
             # wait for owner to reply
-            response = await readline(self.clients[self.owneruuid].reader) 
+            response = await readline(self.clients[self.owneruuid].reader)
             log.debug(f"Response from owner {response!r}")
             # he said yes!
             if response == 'accepted':
