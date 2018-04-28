@@ -27,7 +27,6 @@ class Server:
         self.loop = loop
 
     async def start(self, port):
-        log.info("Start server")
         self.state = "waiting for owner"
         self.server = await asyncio.start_server(self.handle_new_client, "", port)
 

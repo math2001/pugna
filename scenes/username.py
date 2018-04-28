@@ -27,6 +27,7 @@ class Username:
         if self.textbox.event(e) or self.btn.event(e):
             # TODO: validate username
             self.m.username = self.textbox.text
+            log.info(f"Logged as {self.m.username!r}")
             await self.m.focus("Menu")
 
     async def render(self):
