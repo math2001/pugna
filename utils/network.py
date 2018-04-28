@@ -1,7 +1,7 @@
 from json import JSONDecoder, JSONEncoder
 
 dec = JSONDecoder().decode
-end = JSONEncoder().encode
+enc = JSONEncoder().encode
 
 class CommunicationClosed(Exception):
 
@@ -9,12 +9,11 @@ class CommunicationClosed(Exception):
         self.msg = msg
         self.client = client
 
-async def read(self, client, *requiredkeys, kind=None):
+async def read(client, *requiredkeys, kind=None):
     """Checks if a req has the required keys, and reply with an error and
     raises an exception. Otherwise, it simply returns the request
     clients just needs to have a reader and writer
     """
-
     res = (await client.reader.readline()).decode('utf-8')
     if not res:
         raise CommunicationClosed(f"Client {client} left.", client)
@@ -30,12 +29,11 @@ async def read(self, client, *requiredkeys, kind=None):
                          f"expetected {kind!r}")
     return res
 
-
-
-async def write(writer, msg, drain=True):
-    writer.write((enc(msg)).encode('utf-8'))
+async def write(client, msg, drain=True):
+    """Client needs to have a reader and a writer"""
+    client.writer.write((enc(msg)).encode('utf-8'))
     if drain:
-        await writer.drain()
+        await client.writer.drain()
 
 def matches(d, *keys):
     return

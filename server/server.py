@@ -59,7 +59,7 @@ class Server:
     async def gui_handle_new_client(self, reader, writer):
         try:
             await self.handle_new_client(reader, writer)
-        except CommunicateClosed as e:
+        except CommunicationClosed as e:
             self.state = "Sending ClientLeft to other client"
             log.error(f"Client left: {e}")
             log.debug(f"Got {len(self.clients)} clients")
@@ -92,6 +92,7 @@ class Server:
         log.debug("Got brand new client!")
 
         fakeclient = Client(None, None, reader, writer)
+        # log.debug(f'{fakeclient}, {fakeclient.reader}')
         req = await read(fakeclient, 'uuid', 'username')
 
         uuid = req['uuid']
