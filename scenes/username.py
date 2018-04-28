@@ -4,6 +4,7 @@ from utils.gui import TextBox, Button
 
 log = logging.getLogger(__name__)
 
+
 class Username:
 
     menubtn = False
@@ -23,7 +24,7 @@ class Username:
         self.lblrect.top -= 10
 
     async def event(self, e):
-        if self.textbox.event(e) is True:
+        if self.textbox.event(e) or self.btn.event(e):
             # TODO: validate username
             self.m.username = self.textbox.text
             await self.m.focus("Menu")
@@ -31,3 +32,4 @@ class Username:
     async def render(self):
         self.textbox.render(self.m.screen)
         self.m.screen.blit(self.lbl, self.lblrect)
+        self.btn.render(self.m.screen)
