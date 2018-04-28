@@ -11,8 +11,6 @@ from utils.gui import ConfirmBox, MessageBox
 
 log = logging.getLogger(__name__)
 
-Request = namedtuple("Request", 'uuid username')
-
 class HostGame:
 
     """This class acts as a client, talking to the server *this*
@@ -57,14 +55,16 @@ class HostGame:
             "127.0.0.1", PORT, loop=self.m.loop)
         self.m.state = "Identifying"
 
-        log.debug("Send ids to the server")
-
         # send uuid and username to the server so that he knows we are the
-        # owner. We then have a connection established and server can talk to
-        # us.
-        await write(self.m.writer, self.m.uuid)
-        await write(self.m.writer, self.m.username)
+        # owner. We then have a connection established and the server can talk
+        # to us.
+        await write(self.m.writer, {
+            'kind': 'identification',
+            'uuid': self.m.uuid,
+            'username': self.m.username
+        })
 
+        res = await read(self.m, 'identification state change')
         answer = await readline(self.m.reader)
         if answer != "successful identification":
             # can't be bothered to do that right now since it is very unlikely

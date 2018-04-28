@@ -54,23 +54,6 @@ class Server:
 
     state = property(lambda self: self._state, setstate)
 
-    async def read(self, client, *requiredkeys):
-        """Checks if a req has the required keys, and reply with an error and
-        returns false. Otherwise, it simply returns the request
-        """
-
-        res = (await client.reader.readline()).decode('utf-8')
-        if not res:
-            raise CommunicationClosed(f"Client {client} left.", client)
-        if not isinstance(res, dict) \
-            or not all(k in res for k in requiredkeys + ['kind']):
-            await write(client.writer, {'kind': 'error', 'from': 'client',
-                                        'reason': 'invalid informations',
-                                        'requiredkeys': requiredkeys})
-            return False
-        return res
-
-
     async def gui_handle_new_client(self, reader, writer):
         try:
             await self.handle_new_client(reader, writer)
@@ -107,7 +90,7 @@ class Server:
         log.debug("Got brand new client!")
 
         fakeclient = Client(None, None, reader, writer)
-        req = await self.read(fakeclient, 'uuid', 'username')
+        req = await read(fakeclient, 'uuid', 'username')
 
         uuid = req['uuid']
         username = req['username']
@@ -139,7 +122,7 @@ class Server:
             })
             self.state = 'waiting for owner response'
             # wait for owner to reply
-            res = await self.read(self.clients[self.owneruuid], 'accepted')
+            res = await read(self.clients[self.owneruuid], 'accepted')
             log.debug(f"Response from owner {res!r}")
             # he said yes!
             if res['accepted'] is True:
@@ -166,7 +149,6 @@ class Server:
 
         # here, state must be 'waiting for owner'
         if uuid == self.owneruuid:
-            log.debug(f"Got owner's infos: {uuid!r} {username!r}")
             self.state = "waiting for player"
             await write(writer, {
                 'kind': 'identification state change',
