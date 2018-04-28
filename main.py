@@ -74,7 +74,7 @@ class Manager:
         self.uifont.size = 20
         self.uifont.origin = False
 
-        self.fancyfont.fgcolor = TEXT_FG
+        self.fancyfont.fgcolor = TEXT_HOVER_FG
         self.fancyfont.size = 25
         self.fancyfont.origin = False
 
@@ -120,6 +120,6 @@ class Manager:
 
 os.environ["SDL_VIDEO_CENTERED"] = "1"
 
-manager = Manager("join game")
+manager = Manager("select hero")
 pygame.quit()
 

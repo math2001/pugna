@@ -1,3 +1,5 @@
+from json import JSONDecoder
+
 async def readline(reader):
     return (await reader.readline()).decode('utf-8').strip()
 
@@ -7,3 +9,4 @@ async def write(writer, *lines, drain=True):
     if drain:
         await writer.drain()
 
+dec = JSONDecoder().decode

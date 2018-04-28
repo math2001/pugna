@@ -10,14 +10,15 @@ def origin(font, enabled):
     yield font
     font.origin = default
 
-def word_wrap(surf, text, font, opt):
+def word_wrap(surf, text, font, x=0, y=0, **opt):
     """Stolen from the pygame documentation freetype.Font.render_to
     I tweaked it a bit to support \n
     """
+    opt = Options(**opt)
     with origin(font, True):
         width, height = surf.get_size()
-        line_spacing = font.get_sized_height() + 2
-        x, y = 0, line_spacing
+        line_spacing = font.get_sized_height()
+        y += line_spacing
         space = font.get_rect(' ')
         for line in text.splitlines():
             for word in line.split(' '):
@@ -264,7 +265,7 @@ class MessageBox:
 
         text = pygame.Surface((opt.width - opt.margin[0] * 2,
                                opt.height - opt.margin[1] * 2))
-        word_wrap(text, message, font, opt)
+        word_wrap(text, message, font, **opt)
         self.image.blit(text, opt.margin)
 
         pygame.draw.rect(self.image, opt.bordercolor,

@@ -1,10 +1,15 @@
 import asyncio
 import sys
 import os
-sys.path.append(os.getcwd())
 import logging
 from collections import namedtuple
+if __name__ == "__main__":
+    sys.path.append(os.getcwd())
 from utils.network import *
+from .heros import HEROS, HEROS_DESCRIPTION
+import json
+
+enc = json.JSONEncoder().encode
 
 log = logging.getLogger(__name__)
 
@@ -82,9 +87,7 @@ class Server:
                                             reader, writer)
                 # to the client
                 await write(writer, 'accepted')
-                self.state = 'waiting for hero selection'
-                log.info("Broadcast select hero")
-                await self.broadcast('select hero')
+                return await self.hero_selection()
             else:
                 self.state = 'waiting for player'
                 await write(writer, "declined")
@@ -105,6 +108,12 @@ class Server:
             writer.write_eof()
             await writer.drain()
             writer.close()
+
+    async def hero_selection(self):
+        self.state = 'waiting for hero selection'
+        await self.broadcast('select hero')
+        await self.broadcast(enc(HEROS_DESCRIPTION))
+
 
     async def broadcast(self, *lines):
         for client in self.clients.values():
