@@ -81,7 +81,7 @@ class Manager:
         self.fancyfont.size = 25
         self.fancyfont.origin = False
 
-    async def focus(self, scene):
+    async def focus(self, scene, *args, **kwargs):
         self.reset_fonts()
         scene = scene.title().replace(' ', '')
         try:
@@ -91,7 +91,7 @@ class Manager:
         log.info("Scene: {!r}".format(scene.__class__.__name__))
         if hasattr(self.current, 'on_blur'):
             await self.current.on_blur(scene)
-        await scene.on_focus(self)
+        await scene.on_focus(self, *args, **kwargs)
         self.current = scene
 
     async def run(self):

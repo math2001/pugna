@@ -168,9 +168,11 @@ class Server:
 
     async def hero_selection(self):
         self.state = 'waiting for hero selection'
-        await self.broadcast('select hero')
-        await self.broadcast(enc(HEROS_DESCRIPTION))
-
+        await self.broadcast({
+            'kind': 'next scene',
+            'name': 'select hero',
+            'heros_description': HEROS_DESCRIPTION
+        })
 
     async def broadcast(self, *lines):
         for client in self.clients.values():

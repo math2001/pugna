@@ -107,14 +107,15 @@ class HostGame:
                 })
                 self.confirmbox = None
                 self.m.state = "Waiting for server green flag"
-                response = await read(self.m, 'state',
-                                      kind='request state change')
+                response = await read(self.m, 'name', 'heros_description',
+                                      kind='next scene')
 
                 log.debug(f"Got response from server {response!r}")
-                if response['state'] is True:
-                    await self.m.focus("select hero")
+                if response['name'] == "select hero":
+                    await self.m.focus("select hero",
+                                       response['heros_description'])
                 else:
-                    log.critical(f"Got unexpected response's state "
+                    log.critical(f"Got unexpected response "
                                  f"{response!r}")
                     raise NotImplementedError("This shouldn't happen")
             elif result is False:

@@ -9,9 +9,8 @@ log = logging.getLogger(__name__)
 
 class SelectHero:
 
-    async def on_focus(self, manager):
+    async def on_focus(self, manager, heros_description):
         self.m = manager
-        heros_description = dec(await readline(self.m.reader))
         rect = self.m.fancyfont.get_rect("Who are you?")
         self.title, self.titlerect = self.m.fancyfont.render("Who are you",
                                                              size=60)
