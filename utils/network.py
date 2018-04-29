@@ -31,7 +31,7 @@ async def read(client, *requiredkeys, kind=None):
 
 async def write(client, msg, drain=True):
     """Client needs to have a reader and a writer"""
-    client.writer.write((enc(msg)).encode('utf-8'))
+    client.writer.write((enc(msg) + '\n').encode('utf-8'))
     if drain:
         await client.writer.drain()
 

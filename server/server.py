@@ -92,7 +92,6 @@ class Server:
         log.debug("Got brand new client!")
 
         fakeclient = Client(None, None, reader, writer)
-        # log.debug(f'{fakeclient}, {fakeclient.reader}')
         req = await read(fakeclient, 'uuid', 'username')
 
         uuid = req['uuid']
@@ -146,6 +145,9 @@ class Server:
                 self.loop.create_task(self.handle_new_client(reader, writer))
             return
 
+        if req['kind'] != 'identification':
+            raise ValueError(f"Got request of kind {req['kind']!r}, was "
+                             "expecting 'identification'")
         # here, state must be 'waiting for owner'
         if uuid == self.owneruuid:
             self.state = "waiting for player"
