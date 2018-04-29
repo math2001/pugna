@@ -6,8 +6,8 @@ import server
 import asyncio
 from collections import namedtuple
 from constants import PORT
-from utils.network import *
 from utils.gui import ConfirmBox, MessageBox
+from utils.classes import *
 
 log = logging.getLogger(__name__)
 
@@ -27,7 +27,7 @@ class HostGame:
 
         self.initrender()
 
-        self.server = server.Server(self.m.uuid, self.m.username, self.m.loop)
+        self.server = server.Server(self.m.uuid, self.m.loop)
 
         self.m.state = "Creating server"
         if await self.start_server() is False:
@@ -56,26 +56,24 @@ class HostGame:
             await self.connect_to_server()
         except ConnectionClosed as e:
             log.debug("Connection closed")
-            # hostgame wasn't the one who closed the connection
-            if e.reader is not self.m.reader:
-                raise NotImplement("Other player left popup")
-
+            if e.reader is not self.m.connection.reader:
+                # the other player (not the owner) left the game
+                raise NotImplement("Show 'other player left' popup")
+                # TODO: shutdown the server, and move back to menu
 
     async def connect_to_server(self):
-        self.m.reader, self.m.writer = await asyncio.open_connection(
-            "127.0.0.1", PORT, loop=self.m.loop)
+        self.m.connection = Connection(*await asyncio.open_connection(
+            "127.0.0.1", PORT, loop=self.m.loop))
         self.m.state = "Identifying"
 
         # send uuid and username to the server so that he knows we are the
         # owner. We then have a connection established and the server can talk
         # to us.
-        await write(self.m, {
-            'kind': 'identification',
-            'uuid': self.m.uuid,
-            'username': self.m.username
-        })
+        await self.m.connection.write(kind='identification', uuid=self.m.uuid,
+                                      username=self.m.username)
 
-        res = await read(self.m, 'state', kind='identification state change')
+        res = await self.m.connection.read('state',
+                                           kind='identification state change')
         if res['state'] != "success":
             # TODO: implement gui
             log.critical(f"Unexpected answer while identifying {res!r}")
@@ -87,21 +85,17 @@ class HostGame:
 
     async def on_blur(self, next_scene):
         if next_scene.__class__.__name__ == "Menu":
-            # if self.connecting_to_server:
-            #     self.connecting_to_server.cancel()
-            self.m.writer.write_eof()
-            self.m.writer.close()
-            await self.server.close()
+            await self.server.shutdown()
 
     async def listen_for_request(self):
-        self.request = None
         self.m.state = 'Waiting for an other player to join'
 
-        self.request = await read(self.m, 'uuid', 'username', kind='new request')
+        req = await self.m.connection.read('uuid', 'username',
+                                           kind='new request')
         self.m.state = 'Got request from player'
 
         self.confirmbox = ConfirmBox.new(self.m.uifont,
-                                         f"{self.request['username']} wants to "
+                                         f"{req['username']} wants to "
                                          "play with you!", "Accept!", "Na...")
         self.confirmbox.rect.center = self.m.rect.center
         self.confirmbox.calibre()
@@ -113,27 +107,26 @@ class HostGame:
         if self.confirmbox:
             result = self.confirmbox.event(e)
             if result is True:
-                log.info("Request accecepted")
-                await write(self.m, {
-                    'kind': 'request state change',
-                    'accepted': True
-                })
+                log.info("Request accepted")
+                await self.m.connection.write(kind='request state change',
+                                              state='accepted')
                 self.confirmbox = None
                 self.m.state = "Waiting for server green flag"
-                response = await read(self.m, 'name', 'heros_description',
-                                      kind='next scene')
+
+                response = await self.m.connection.read('name',
+                                                        'heros_description',
+                                                        kind='next scene')
 
                 log.debug(f"Got response from server {response!r}")
                 if response['name'] == "select hero":
                     await self.m.focus("select hero",
                                        response['heros_description'])
                 else:
-                    log.critical(f"Got unexpected response "
-                                 f"{response!r}")
+                    log.critical(f"Got unexpected response {response!r}")
                     raise NotImplementedError("This shouldn't happen")
             elif result is False:
-                await write(self.m, {'kind': 'request state change',
-                                     'accepted': False})
+                await self.m.connection.write(kind='request state change',
+                                              state='declined')
                 self.confirmbox = None
                 self.m.loop.create_task(self.listen_for_request())
 

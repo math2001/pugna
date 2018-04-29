@@ -3,7 +3,6 @@ import logging
 from constants import PORT
 from asyncio import open_connection
 from utils.gui import TextBox, MessageBox, Button
-from utils.network import *
 
 log = logging.getLogger(__name__)
 

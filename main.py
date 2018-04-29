@@ -6,6 +6,7 @@ import pygame.freetype
 from pygame.locals import *
 from constants import *
 from utils.gui import Button
+from utils.classes import *
 import scenes
 from uuid import uuid4
 
@@ -33,8 +34,7 @@ class Manager:
         pygame.key.set_repeat(300, 50)
 
         # used for communicating with server
-        self.writer = None
-        self.reader = None
+        self.connection = None
 
         pygame.display.set_caption(CAPTION)
 

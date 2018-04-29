@@ -2,7 +2,6 @@ import logging
 import pygame
 from pygame.locals import *
 from constants import *
-from utils.network import *
 from utils.gui import word_wrap
 
 log = logging.getLogger(__name__)
