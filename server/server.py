@@ -10,6 +10,7 @@ STATE_WAITING_OWNER = 'Waiting for the owner to connect'
 STATE_WAITING_REQUEST = 'Waiting for a player to join'
 STATE_WAITING_REQUEST_REPLY = 'Waiting for the owner to reply'
 STATE_HERO_SELECTION = 'Waiting for players to choose their hero'
+STATE_CLOSING = 'closing'
 STATE_CLOSED = 'closed'
 
 class Server:
@@ -28,6 +29,11 @@ class Server:
         # these are clients who haven't identified yet. They are kept here
         # so that we can close them in case the server is shutdown
         self.anonymous_clients = []
+
+        # these tasks are used to read both the player and the owner at the same
+        # time (so we don't use await, which would block)
+        self.player_task = None
+        self.owner_task = None
 
     def setstate(self, newvalue):
         log.info(f'Server{{{newvalue}}}')
@@ -59,6 +65,13 @@ class Server:
         if self.state == STATE_CLOSED:
             return
 
+        self.state = STATE_CLOSING
+
+        if self.owner_task:
+            self.owner_task.cancel()
+        if self.player_task:
+            self.player_task.cancel()
+
         if self.owner:
             await self.owner.close()
 
@@ -72,19 +85,24 @@ class Server:
             self.server.close()
             await self.server.wait_closed()
 
+        self.state = STATE_CLOSED
+
     async def handle_new_client(self, writer, reader):
         """Handles a new client.
 
         All it does is change the state and store the clients. It doesn't start
         the game loop or anything.
         """
+
         client = Connection(writer, reader)
-        self.anonymous_clients.append(client)
+
         if self.owner and self.player:
             await client.write(kind='request state change',
                                reason='enough players for now')
             await client.close()
             return
+
+        self.anonymous_clients.append(client)
 
         try:
             details = await client.read('uuid', 'username',
@@ -92,6 +110,9 @@ class Server:
         except ValueError as e:
             log.error("Invalid informations for identification. Closing.")
             await client.close()
+        except ConnectionClosed as e:
+            log.warning(f"Client {client} left")
+            return
 
         self.anonymous_clients.pop()
         client.uuid = details['uuid']
@@ -165,7 +186,6 @@ class Server:
         if self.player_task.done() and self.owner_task.done():
             await self.broadcast()
 
-
     async def gameloop(self):
         """loops..."""
         while self.state != STATE_CLOSED:
@@ -180,3 +200,4 @@ class Server:
             elif self.state == STATE_HERO_SELECTION:
                 if not await self.handle_hero_selection():
                     continue # as long as the players are choosing, we skip
+

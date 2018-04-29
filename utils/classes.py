@@ -10,6 +10,7 @@ class Connection:
     def __init__(self, reader, writer):
         self.reader = reader
         self.writer = writer
+        self.closed = False
 
     async def read(self, *requiredkeys, kind=None):
         """Checks if a req has the required keys, and reply with an error and
@@ -38,13 +39,14 @@ class Connection:
         self.writer.write((enc(kwargs) + '\n').encode('utf-8'))
         await self.writer.drain()
 
-    async def close(client):
-        client.writer.write_eof()
-        await client.writer.drain()
-        client.writer.close()
+    async def close(self):
+        self.writer.write_eof()
+        await self.writer.drain()
+        self.writer.close()
+        self.closed = True
 
     def __str__(self):
-        return f"<Client {self.username!r}>"
+        return f"<Connection {'closed' if self.closed else 'open'}>"
 
     def __repr__(self):
         return str(self)
