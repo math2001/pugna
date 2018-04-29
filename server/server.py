@@ -110,6 +110,7 @@ class Server:
         except ValueError as e:
             log.error("Invalid informations for identification. Closing.")
             await client.close()
+            return
         except ConnectionClosed as e:
             log.warning(f"Client {client} left")
             return
