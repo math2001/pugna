@@ -14,15 +14,16 @@ async def read(client, *requiredkeys, kind=None):
     raises an exception. Otherwise, it simply returns the request
     clients just needs to have a reader and writer
     """
+    requiredkeys += ('kind', )
     res = (await client.reader.readline()).decode('utf-8')
     if not res:
         raise CommunicationClosed(f"Client {client} left.", client)
     res = dec(res)
     if not isinstance(res, dict) \
-        or not all(k in res for k in requiredkeys + ('kind', )):
-        await write(client.writer, {'kind': 'error', 'from': 'client',
-                                    'reason': 'invalid informations',
-                                    'requiredkeys': requiredkeys})
+        or not all(k in res for k in requiredkeys):
+        await write(client, {'kind': 'error', 'from': 'client',
+                             'reason': 'invalid informations',
+                             'requiredkeys': requiredkeys})
         raise ValueError("Got invalid informations")
     if kind is not None and res['kind'] != kind:
         raise ValueError(f"Invalid kind for the reply. Got {res['kind']!r}, "
