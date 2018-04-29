@@ -88,8 +88,8 @@ class HostGame:
         self.m.state = 'Got request from player'
 
         self.confirmbox = ConfirmBox.new(self.m.uifont,
-                                         f"{username} wants to play with you!",
-                                        "Accept!", "Na...")
+                                         f"{self.request['username']} wants to "
+                                         "play with you!", "Accept!", "Na...")
         self.confirmbox.rect.center = self.m.rect.center
         self.confirmbox.calibre()
 
@@ -120,6 +120,7 @@ class HostGame:
             elif result is False:
                 await write(self.m, {'kind': 'request state change',
                                      'accepted': False})
+                self.confirmbox = None
                 self.m.loop.create_task(self.listen_for_request())
 
 

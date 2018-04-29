@@ -174,7 +174,7 @@ class Server:
 
     async def broadcast(self, *lines):
         for client in self.clients.values():
-            await write(client.writer, *lines)
+            await write(client, *lines)
 
     def __str__(self):
         return "<Server state={}>".format(self.state)
