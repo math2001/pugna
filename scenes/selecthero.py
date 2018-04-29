@@ -95,3 +95,8 @@ class SelectHero:
             pygame.draw.rect(self.m.screen, pygame.Color('tomato'),
                              self.hovered, 1)
         self.m.screen.set_clip(None)
+
+
+    async def on_blur(self, next_scene):
+        if next_scene.__class__.__name__ == "Menu":
+            await self.m.server.shutdown()

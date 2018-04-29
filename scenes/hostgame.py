@@ -27,7 +27,7 @@ class HostGame:
 
         self.initrender()
 
-        self.server = server.Server(self.m.uuid, self.m.loop)
+        self.m.server = server.Server(self.m.uuid, self.m.loop)
 
         self.m.state = "Creating server"
         if await self.start_server() is False:
@@ -40,7 +40,7 @@ class HostGame:
             self.connect_to_server_handler())
 
     async def start_server(self):
-        error = await self.server.start(PORT)
+        error = await self.m.server.start(PORT)
         if error is None:
             return True
 
@@ -85,7 +85,7 @@ class HostGame:
 
     async def on_blur(self, next_scene):
         if next_scene.__class__.__name__ == "Menu":
-            await self.server.shutdown()
+            await self.m.server.shutdown()
 
     async def listen_for_request(self):
         self.m.state = 'Waiting for an other player to join'
