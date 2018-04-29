@@ -64,10 +64,10 @@ class HostGame:
             'username': self.m.username
         })
 
-        res = await read(self.m, 'state', kind='identification')
-        if res['state'] != "successful":
+        res = await read(self.m, 'state', kind='identification state change')
+        if res['state'] != "success":
             # TODO: implement gui
-            log.critical(f"Unexpected answer while identifying {answer!r}")
+            log.critical(f"Unexpected answer while identifying {res!r}")
             raise NotImplementedError("Need to have a nice GUI for this")
         log.debug("successful logging as owner with the server")
 
