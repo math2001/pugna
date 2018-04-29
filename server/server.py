@@ -35,7 +35,10 @@ class Server:
         self._state = 'closed'
         self.loop = loop
         self.server = None
+        # a fake client is a client that hasn't identified (hasn't send uuid)
         self.fakeclient = None
+        # read the owner just to check if he's not leaving
+        self.watch_owner = None
 
     async def start(self, port):
         try:
@@ -82,8 +85,8 @@ class Server:
                     log.debug(f'skip {uuid} {client.username}')
                     continue
                 log.debug(f"Send to client {uuid} {client.username} {client.writer}")
-                await write(self.clients[uuid], enc({
-                    "kind": "client left", "username": client.username}))
+                await write(self.clients[uuid], {
+                    "kind": "client left", "username": client.username})
             self.state = 'awaiting close'
 
     async def handle_new_client(self, reader, writer):
@@ -134,11 +137,9 @@ class Server:
             # feeds data because we were listening for nothing before
             # (not for nothing, just so that the server knows if the client
             # leaves)
-            self.clients[self.owneruuid].reader.feed_data("\n")
             self.state = 'waiting for owner response'
             # wait for owner to reply
-            res = await read(self.clients[self.owneruuid], 'accepted',
-                             kind='request state change')
+            res = await self.watch_owner
             log.debug(f"Response from owner {res!r}")
             # he said yes!
             if res['accepted'] is True:
@@ -172,7 +173,8 @@ class Server:
                 'kind': 'identification state change',
                 'state': 'success'
             })
-            await read(self.clients[self.owneruuid])
+            self.watch_owner = read(self.clients[self.owneruuid], 'accepted',
+                                    kind='request state change')
         else:
             log.warning(f"Got fake request pretenting to be owner "
                         f"{uuid!r} {username!r}")
