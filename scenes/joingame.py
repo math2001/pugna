@@ -70,8 +70,11 @@ class JoinGame:
             data = await self.m.connection.read('heros_description',
                                                 kind='next scene data')
             return await self.m.focus("select hero", data['heros_description'])
-        elif res['reason'] == 'enough player for now':
-            raise NotImplementedError("Display hold on, owner's busy")
+        elif res['reason'] == 'enough players for now':
+            log.info("Request declined by server (enough player)")
+            self.messagebox = MessageBox.new(self.m.uifont,
+                                             "Another player has already "
+                                             'joined this game...\n', 'Crap')
         elif res['reason'] == 'owner declined':
             log.info("Request declined by owner (lol)")
             self.messagebox = MessageBox.new(self.m.uifont,
@@ -81,7 +84,7 @@ class JoinGame:
             log.critical(f"Unexpected response from server {res!r}")
             self.messagebox = MessageBox.new(self.m.uifont,
                 "Recieved an unexpected response from the server (see log).\n"
-                "Please try again."
+                "Please try again.",
                 "Hum... Ok")
 
         self.submitbtn.enabled = True

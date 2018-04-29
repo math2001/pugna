@@ -109,7 +109,7 @@ class Server:
             details = await client.read('uuid', 'username',
                                         kind='identification')
         except ValueError as e:
-            log.error("Invalid informations for identification. Closing.")
+            log.error(f"Invalid informations for identification. {e}")
             await client.close()
             return
         except ConnectionClosed as e:
