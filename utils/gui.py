@@ -49,12 +49,7 @@ class Options(dict):
     def __setattr__(self, attr, value):
         self[attr] = value
 
-class GuiElement:
-
-    def render(self, s):
-        s.blit(self.image, self.rect)
-
-class Button(GuiElement):
+class Button:
 
     """A simple button
     Nothing fancy here... Notice that when the height/width is explicit
@@ -91,10 +86,11 @@ class Button(GuiElement):
         opt.hover_bordercolor = opt.bordercolor + pygame.Color(10, 10, 10)
         opt.hover_thickness = opt.thickness
 
-        opt.disabled_fgcolor = opt.fgcolor
+        opt.disabled_fgcolor = opt.fgcolor - pygame.Color(80, 80, 80)
+        opt.disabled_fgcolor.a = 255
         opt.disabled_bgcolor = opt.bgcolor
-        opt.disabled_bordercolor = opt.bordercolor
-        opt.disabled_thickness = opt.thickness
+        opt.disabled_bordercolor = opt.bordercolor - pygame.Color(10, 10, 10)
+        opt.disabled_thickness = opt.thickness + 1
 
         opt.update(useropt)
 
@@ -114,7 +110,7 @@ class Button(GuiElement):
         self.hover = self._render_state(size, "hover_", opt)
         self.disabled = self._render_state(size, "disabled_", opt)
 
-        self.image = self.normal
+        self.enabled = True # this'll set self.image
 
     def _render_state(self, size, state, opt):
         bordercolor = opt[state + "bordercolor"]
@@ -123,9 +119,11 @@ class Button(GuiElement):
         bgcolor = opt[state + "bgcolor"]
 
         s = pygame.Surface(size)
-        pygame.draw.rect(s, bordercolor, self.rect.inflate(-thickness * 2,
-                                                           -thickness * 2),
-                         thickness)
+        # takes the even number below if odd, otherwise do nothing
+        # because we can't deflate with an odd number (it's always going to be
+        # on more or one less). So here, we try to inflate as less as possible.
+        t = (opt.thickness - opt.thickness % 2) * -2
+        pygame.draw.rect(s, bordercolor, self.rect.inflate(t, t), thickness)
 
         with origin(self.font, False):
             self.font.render_to(s, self.fontrect, self.text, fgcolor, bgcolor,
@@ -133,6 +131,8 @@ class Button(GuiElement):
         return s
 
     def event(self, e):
+        if not self.enabled:
+            return
         if e.type == MOUSEMOTION:
             if self.rect.collidepoint(e.pos):
                 self.image = self.hover
@@ -142,12 +142,23 @@ class Button(GuiElement):
                 and e.button == 1
                 and self.rect.collidepoint(e.pos))
 
+    def render(self, s):
+        s.blit(self.image, self.rect)
+
     def __str__(self):
         return '<Button text={!r}>'.format(self.text)
 
     def __repr__(self):
         return self.__str__()
 
+    def setenabled(self, val):
+        self._enabled = val
+        if val:
+            self.image = self.normal
+        else:
+            self.image = self.disabled
+
+    enabled = property(lambda self: self._enabled, setenabled)
 
 class TextBox:
 
@@ -195,7 +206,9 @@ class TextBox:
         thck = self.opt[state + 'thickness']
 
         s = pygame.Surface((self.opt.width, self.opt.height))
-        pygame.draw.rect(s, bd, self.rect.inflate(-thck * 2, -thck * 2), thck)
+        # see the Button._render_state
+        t = (thck - thck % 2) * -2
+        pygame.draw.rect(s, bd, self.rect.inflate(t, t), thck)
         return s
 
     def event(self, e):

@@ -4,7 +4,6 @@ from utils.gui import TextBox, Button
 
 log = logging.getLogger(__name__)
 
-
 class Username:
 
     menubtn = False
@@ -15,7 +14,8 @@ class Username:
         self.textbox = TextBox(manager.uifont)
         self.textbox.rect.center = self.m.rect.center
 
-        self.btn = Button(manager.uifont, "OK", maxlength=16)
+        self.btn = Button(manager.uifont, "OK", maxlength=16,
+                          height=self.textbox.rect.height)
         self.btn.rect.midleft = self.textbox.rect.midright
         self.btn.rect.left += 10
 
