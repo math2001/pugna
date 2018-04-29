@@ -28,6 +28,7 @@ def word_wrap(surf, text, font, x=0, y=0, **opt):
                 if x + bounds.width + bounds.x >= width:
                     raise ValueError("word too wide for the surface")
                 if y + bounds.height - bounds.y >= height:
+                    return
                     raise ValueError("text to long for the surface")
                 font.render_to(surf, (x, y), opt.bgcolor, opt.fgcolor)
                 x += bounds.width + space.width

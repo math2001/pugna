@@ -8,7 +8,11 @@ log = logging.getLogger(__name__)
 
 class SelectHero:
 
-    async def on_focus(self, manager, heros_description):
+    async def on_focus(self, manager, heros_description=None):
+        # for dev
+        if heros_description is None:
+            import server.heros
+            heros_description = server.heros.HEROS_DESCRIPTION
         self.m = manager
         rect = self.m.fancyfont.get_rect("Who are you?")
         self.title, self.titlerect = self.m.fancyfont.render("Who are you",
