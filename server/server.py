@@ -35,6 +35,7 @@ class Server:
         self._state = 'closed'
         self.loop = loop
         self.server = None
+        self.fakeclient = None
 
     async def start(self, port):
         try:
@@ -53,9 +54,9 @@ class Server:
             return await self.close()
         self.state = "closed"
         for client in self.clients.values():
-            client.writer.write_eof()
-            await client.writer.drain()
-            client.writer.close()
+            await close(client)
+        if self.fakeclient:
+            await close(self.fakeclient)
         if self.server:
             self.server.close()
 
@@ -69,6 +70,8 @@ class Server:
         try:
             await self.handle_new_client(reader, writer)
         except ConnectionClosed as e:
+            if self.state == 'closed':
+                return
             self.state = "Sending ClientLeft to other client"
             log.error(f"Client left: {e}")
             log.debug(f"Got {len(self.clients)} clients")
@@ -79,7 +82,7 @@ class Server:
                     log.debug(f'skip {uuid} {client.username}')
                     continue
                 log.debug(f"Send to client {uuid} {client.username} {client.writer}")
-                await write(self.clients[uuid].writer, enc({
+                await write(self.clients[uuid], enc({
                     "kind": "client left", "username": client.username}))
             self.state = 'awaiting close'
 
@@ -100,8 +103,9 @@ class Server:
 
         log.debug("Got brand new client!")
 
-        fakeclient = Client(None, None, reader, writer)
-        req = await read(fakeclient, 'uuid', 'username')
+        self.fakeclient = Client(None, None, reader, writer)
+        req = await read(self.fakeclient, 'uuid', 'username')
+        self.fakeclient = None
 
         uuid = req['uuid']
         username = req['username']

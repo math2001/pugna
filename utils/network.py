@@ -17,7 +17,7 @@ async def read(client, *requiredkeys, kind=None):
     requiredkeys += ('kind', )
     res = (await client.reader.readline()).decode('utf-8')
     if not res:
-        raise ConnectionClosed(f"Client {client.reader} left.", client.reader)
+        raise ConnectionClosed(f"Client left.", client.reader)
     res = dec(res)
     if not isinstance(res, dict) \
         or not all(k in res for k in requiredkeys):
@@ -38,5 +38,7 @@ async def write(client, msg, drain=True):
     if drain:
         await client.writer.drain()
 
-def matches(d, *keys):
-    return
+async def close(client):
+    client.writer.write_eof()
+    await client.writer.drain()
+    client.writer.close()
