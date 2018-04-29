@@ -98,6 +98,7 @@ class Server:
 
         if self.owner and self.player:
             await client.write(kind='request state change',
+                               state='declined',
                                reason='enough players for now')
             await client.close()
             return
@@ -147,11 +148,12 @@ class Server:
         req = await self.owner.read('state', kind='request state change')
         if req['state'] == 'accepted':
             await self.player.write(kind='request state change',
-                                    state='accepted')
+                                    state='accepted',
+                                    reason=None)
             self.state = STATE_HERO_SELECTION
 
             # initiate hero selection
-            await self.broadcast(kind='next scene', name='select hero',
+            await self.broadcast(kind='next scene data',
                                  heros_description=HEROS_DESCRIPTION)
 
             # these 2 tasks will be used by handle_hero_selection
@@ -163,7 +165,8 @@ class Server:
             return True
         elif req['state'] == 'declined':
             await self.player.write(kind='request state change',
-                                    state='declined')
+                                    state='declined',
+                                    reason='owner declined')
             await self.player.close()
             self.player = None
             self.state = STATE_WAITING_REQUEST
@@ -177,15 +180,15 @@ class Server:
         # check for both players wheter they have chosen their champion and
         # send it to the other player
         if self.owner_task.done():
-            self.player.write(kind='other player ready',
-                              username=self.player.username)
+            await self.player.write(kind='other player ready',
+                                    username=self.player.username)
 
         if self.player_task.done():
-            self.owner.write(kind='other player ready',
-                             username=self.owner.username)
+            await self.owner.write(kind='other player ready',
+                                   username=self.owner.username)
 
         if self.player_task.done() and self.owner_task.done():
-            await self.broadcast()
+            await self.broadcast(kind='next scene', name='game')
 
     async def gameloop(self):
         """loops..."""

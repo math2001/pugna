@@ -134,6 +134,6 @@ class Manager:
 
 os.environ["SDL_VIDEO_CENTERED"] = "1"
 
-manager = Manager("select hero")
+manager = Manager("username")
 pygame.quit()
 

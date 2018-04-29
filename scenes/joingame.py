@@ -41,11 +41,13 @@ class JoinGame:
     async def send_request(self, ip):
         self.m.state = 'Opening connection'
         try:
-            self.m.connection = Connection(await open_connection(ip, PORT,
-                                                            loop=self.m.loop))
+            self.m.connection = Connection(*(await open_connection(ip, PORT,
+                                                            loop=self.m.loop)))
         except (ConnectionRefusedError, OSError) as e:
             return await self.display_error(e)
-        await write(self.m.writer, self.m.uuid, self.m.username)
+        await self.m.connection.write(uuid=self.m.uuid,
+                                      username=self.m.username,
+                                      kind='identification')
 
         self.m.state = "Waiting for owner's reply"
         self.submitbtn.enabled = False
@@ -53,10 +55,12 @@ class JoinGame:
         res = await self.m.connection.read('state', 'reason',
                                            kind='request state change')
 
-        if res['accepted'] is True:
-            return await self.m.focus("select hero")
 
-        elif res['reason'] == 'owner busy':
+        if res['state'] == 'accepted':
+            data = await self.m.connection.read('heros_description',
+                                                kind='next scene data')
+            return await self.m.focus("select hero", data['heros_description'])
+        elif res['reason'] == 'enough player for now':
             raise NotImplementedError("Display hold on, owner's busy")
         elif res['reason'] == 'owner declined':
             log.info("Request declined by owner (lol)")
@@ -64,7 +68,7 @@ class JoinGame:
                                              "Your request was declined\n"
                                              "You may try again", 'Really?!')
         else:
-            log.critical(f"Unexpected response from server {response!r}")
+            log.critical(f"Unexpected response from server {res!r}")
             self.messagebox = MessageBox.new(self.m.uifont,
                 "Recieved an unexpected response from the server (see log)\n"
                 "Please try again."
