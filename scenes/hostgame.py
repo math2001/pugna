@@ -37,7 +37,7 @@ class HostGame:
         self.m.state = 'Opening connection with server'
 
         self.connecting_to_server = self.m.loop.create_task(
-            self.connect_to_server_handler())
+            self.handler_connect_to_server())
 
     async def start_server(self):
         error = await self.m.server.start(PORT)
@@ -51,7 +51,7 @@ class HostGame:
         self.messagebox.calibre()
         return False
 
-    async def connect_to_server_handler(self):
+    async def handler_connect_to_server(self):
         try:
             await self.connect_to_server()
         except ConnectionClosed as e:

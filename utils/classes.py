@@ -26,11 +26,11 @@ class Connection:
             await self.write(kind='error', by='client',
                              reason='invalid informations',
                              requiredkeys=requiredkeys)
-            raise ValueError("Got invalid informations (expected all of "
+            raise InvalidMessage("Got invalid informations (expected all of "
                             f"{requiredkeys} of kind {kind!r}, got {reskeys!r}")
         if kind is not None and res['kind'] != kind:
-            raise ValueError(f"Invalid kind for the reply. Got {res['kind']!r}, "
-                            f"expetected {kind!r}")
+            raise InvalidMessage(f"Invalid kind for the reply. Got "
+                                 f"{res['kind']!r}, expetected {kind!r}")
         return res
 
     async def write(self, **kwargs):
@@ -55,3 +55,6 @@ class ConnectionClosed(Exception):
     def __init__(self, msg, reader):
         self.msg = msg
         self.reader = reader
+
+class InvalidMessage(Exception):
+    pass

@@ -87,36 +87,39 @@ class Server:
 
         self.state = STATE_CLOSED
 
-    async def handle_new_client(self, writer, reader):
+    async def new_client(self, writer, reader):
         """Handles a new client.
 
         All it does is change the state and store the clients. It doesn't start
-        the game loop or anything.
+        the game loop or anything (the game loop has to be independent of the
+        clients. Remember, here, we're in a client's callback function).
         """
+
+        try:
+            self.handle_new_client(writer, reader)
+        except ConnectionClosed as e:
+            await client.close()
+            log.info(f"Client {client} left")
+        except InvalidMessage as e:
+            await client.close()
+            log.error(f"Invalid informations for identification. {e}")
+
+    async def handle_new_client(self, writer, reader):
 
         client = Connection(writer, reader)
 
         if self.owner and self.player:
-            await client.write(kind='request state change',
-                               state='declined',
+            await client.write(kind='request state change', state='declined',
                                reason='enough players for now')
             await client.close()
             return
 
         self.anonymous_clients.append(client)
 
-        try:
-            details = await client.read('uuid', 'username',
-                                        kind='identification')
-        except ValueError as e:
-            log.error(f"Invalid informations for identification. {e}")
-            await client.close()
-            return
-        except ConnectionClosed as e:
-            log.warning(f"Client {client} left")
-            return
-
+        details = await client.read('uuid', 'username',
+                                    kind='identification')
         self.anonymous_clients.pop()
+
         client.uuid = details['uuid']
         client.username = details['username']
 
