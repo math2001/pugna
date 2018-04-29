@@ -52,11 +52,21 @@ class JoinGame:
         self.m.state = "Waiting for owner's reply"
         self.submitbtn.enabled = False
 
-        res = await self.m.connection.read('state', 'reason',
-                                           kind='request state change')
+        error = None
+        try:
+            res = await self.m.connection.read('state', 'reason',
+                                               kind='request state change')
+        except ConnectionClosed as e:
+            error = e
 
-
-        if res['state'] == 'accepted':
+        if error is not None:
+            log.error(f"Connection closed: {error!r}")
+            self.messagebox = MessageBox.new(self.m.uifont,
+                                             "The connection with the server "
+                                             "seems to have been closed.\n"
+                                             "The owner probably just left",
+                                             'How rude!')
+        elif res['state'] == 'accepted':
             data = await self.m.connection.read('heros_description',
                                                 kind='next scene data')
             return await self.m.focus("select hero", data['heros_description'])
@@ -65,12 +75,12 @@ class JoinGame:
         elif res['reason'] == 'owner declined':
             log.info("Request declined by owner (lol)")
             self.messagebox = MessageBox.new(self.m.uifont,
-                                             "Your request was declined\n"
+                                             "Your request was declined.\n"
                                              "You may try again", 'Really?!')
         else:
             log.critical(f"Unexpected response from server {res!r}")
             self.messagebox = MessageBox.new(self.m.uifont,
-                "Recieved an unexpected response from the server (see log)\n"
+                "Recieved an unexpected response from the server (see log).\n"
                 "Please try again."
                 "Hum... Ok")
 

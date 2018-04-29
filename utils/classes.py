@@ -14,13 +14,12 @@ class Connection:
 
     async def read(self, *requiredkeys, kind=None):
         """Checks if a req has the required keys, and reply with an error and
-        raises an exception. Otherwise, it simply returns the request
-        clients just needs to have a reader and writer
+        raises an exception. Otherwise, it simply returns the request.
         """
         requiredkeys += ('kind', )
         res = (await self.reader.readline()).decode('utf-8')
         if not res:
-            raise ConnectionClosed(f"Client left.", self.reader)
+            raise ConnectionClosed(f"Connection closed", self.reader)
         res = dec(res)
         if not isinstance(res, dict) or not all(k in res for k in requiredkeys):
             reskeys = res.keys() if isinstance(res, dict) else res
@@ -35,7 +34,6 @@ class Connection:
         return res
 
     async def write(self, **kwargs):
-        """Client needs to have a reader and a writer"""
         self.writer.write((enc(kwargs) + '\n').encode('utf-8'))
         await self.writer.drain()
 
