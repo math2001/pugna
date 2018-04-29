@@ -124,6 +124,12 @@ class Manager:
         log.info(f"{self.current.__class__.__name__}{{{value}}}")
         self._state = value
 
+    def __str__(self):
+        return f"<Manager for {self.username!r}>"
+
+    def __repr__(self):
+        return str(self)
+
     state = property(lambda self: self._state, setstate)
 
 os.environ["SDL_VIDEO_CENTERED"] = "1"

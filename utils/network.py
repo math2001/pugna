@@ -3,11 +3,11 @@ from json import JSONDecoder, JSONEncoder
 dec = JSONDecoder().decode
 enc = JSONEncoder().encode
 
-class CommunicationClosed(Exception):
+class ConnectionClosed(Exception):
 
-    def __init__(self, msg, client):
+    def __init__(self, msg, reader):
         self.msg = msg
-        self.client = client
+        self.reader = reader
 
 async def read(client, *requiredkeys, kind=None):
     """Checks if a req has the required keys, and reply with an error and
@@ -17,7 +17,7 @@ async def read(client, *requiredkeys, kind=None):
     requiredkeys += ('kind', )
     res = (await client.reader.readline()).decode('utf-8')
     if not res:
-        raise CommunicationClosed(f"Client {client} left.", client)
+        raise ConnectionClosed(f"Client {client.reader} left.", client.reader)
     res = dec(res)
     if not isinstance(res, dict) \
         or not all(k in res for k in requiredkeys):

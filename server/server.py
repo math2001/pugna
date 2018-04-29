@@ -2,7 +2,6 @@ import asyncio
 import sys
 import os
 import logging
-from collections import namedtuple
 
 if __name__ == "__main__":
     sys.path.append(os.getcwd())
@@ -12,7 +11,18 @@ from .heros import HEROS, HEROS_DESCRIPTION
 
 log = logging.getLogger(__name__)
 
-Client = namedtuple('Client', 'username playerstatus reader writer')
+class Client:
+    def __init__(self, username, playerstatus, reader, writer):
+        self.username = username
+        self.playerstatus = playerstatus
+        self.reader = reader
+        self.writer = writer
+
+    def __str__(self):
+        return f"<Client {self.username!r}>"
+
+    def __repr__(self):
+        return str(self)
 
 class PlayerPrivateStatus:
     pass
@@ -40,8 +50,7 @@ class Server:
         if self.state != 'awaiting close':
             # wait for the server to be ready to be closed
             await asyncio.sleep(.1)
-            await self.close()
-            return
+            return await self.close()
         self.state = "closed"
         for client in self.clients.values():
             client.writer.write_eof()
@@ -59,7 +68,7 @@ class Server:
     async def gui_handle_new_client(self, reader, writer):
         try:
             await self.handle_new_client(reader, writer)
-        except CommunicationClosed as e:
+        except ConnectionClosed as e:
             self.state = "Sending ClientLeft to other client"
             log.error(f"Client left: {e}")
             log.debug(f"Got {len(self.clients)} clients")
@@ -118,6 +127,10 @@ class Server:
             await write(self.clients[self.owneruuid], {'kind': 'new request',
                                                        'uuid': uuid,
                                                        'username': username})
+            # feeds data because we were listening for nothing before
+            # (not for nothing, just so that the server knows if the client
+            # leaves)
+            self.clients[self.owneruuid].reader.feed_data("\n")
             self.state = 'waiting for owner response'
             # wait for owner to reply
             res = await read(self.clients[self.owneruuid], 'accepted',
@@ -155,6 +168,7 @@ class Server:
                 'kind': 'identification state change',
                 'state': 'success'
             })
+            await read(self.clients[self.owneruuid])
         else:
             log.warning(f"Got fake request pretenting to be owner "
                         f"{uuid!r} {username!r}")

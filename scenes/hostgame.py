@@ -23,6 +23,7 @@ class HostGame:
 
         self.messagebox = None
         self.confirmbox = None
+        self.connecting_to_server = None
 
         self.initrender()
 
@@ -35,7 +36,8 @@ class HostGame:
 
         self.m.state = 'Opening connection with server'
 
-        self.m.loop.create_task(self.connect_to_server())
+        self.connecting_to_server = self.m.loop.create_task(
+            self.connect_to_server_handler())
 
     async def start_server(self):
         error = await self.server.start(PORT)
@@ -48,6 +50,15 @@ class HostGame:
         self.messagebox.rect.center = self.m.rect.center
         self.messagebox.calibre()
         return False
+
+    async def connect_to_server_handler(self):
+        try:
+            await self.connect_to_server()
+        except ConnectionClosed as e:
+            log.debug("Connection closed")
+            # hostgame wasn't the one who closed the connection
+            if e.reader is not self.m.reader:
+                raise NotImplement("Other player left popup")
 
 
     async def connect_to_server(self):
@@ -71,12 +82,14 @@ class HostGame:
             raise NotImplementedError("Need to have a nice GUI for this")
         log.debug("successful logging as owner with the server")
 
-        self.m.loop.create_task(self.listen_for_request())
+        # self.m.loop.create_task(self.listen_for_request())
+        await self.listen_for_request()
 
     async def on_blur(self, next_scene):
         if next_scene.__class__.__name__ == "Menu":
+            # if self.connecting_to_server:
+            #     self.connecting_to_server.cancel()
             self.m.writer.write_eof()
-            await self.m.writer.drain()
             self.m.writer.close()
             await self.server.close()
 
