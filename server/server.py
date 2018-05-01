@@ -2,7 +2,7 @@ import asyncio
 import logging
 
 from utils.classes import *
-from server.heros import HEROS_DESCRIPTION
+from server.heros import HEROS_DESCRIPTION, HEROS
 
 log = logging.getLogger(__name__)
 
@@ -10,8 +10,9 @@ STATE_WAITING_OWNER = 'Waiting for the owner to connect'
 STATE_WAITING_REQUEST = 'Waiting for a player to join'
 STATE_WAITING_REQUEST_REPLY = 'Waiting for the owner to reply'
 STATE_HERO_SELECTION = 'Waiting for players to choose their hero'
-STATE_CLOSING = 'closing'
-STATE_CLOSED = 'closed'
+STATE_GAME = "Playing!"
+STATE_CLOSING = 'Closing'
+STATE_CLOSED = 'Closed'
 
 class Server:
 
@@ -165,7 +166,6 @@ class Server:
             self.player_task = self.loop.create_task(
                 self.player.read('name', kind='chose hero'))
 
-            return True
         elif req['state'] == 'declined':
             await self.player.write(kind='request state change',
                                     state='declined',
@@ -176,35 +176,60 @@ class Server:
         else:
             log.critical(f"Got unexpected state for 'request state change': "
                          f"{req['state']!r}")
-        return False
 
 
     async def handle_hero_selection(self):
         # check for both players wheter they have chosen their champion and
         # send it to the other player
+
+        # TODO: handle wrong hero selection
         if self.owner_task.done():
+            res = Connection.handle_dec(self.owner_task.result(), 'name',
+                                        kind='hero selected')
+            self.owner = HEROS[res['name']]
             await self.player.write(kind='other player ready',
                                     username=self.player.username)
 
         if self.player_task.done():
+            res = Connection.handle_dec(self.owner_task.result(), 'name',
+                                        kind='hero selected')
+            self.player.hero = HEROS[self.owner_task.result]
             await self.owner.write(kind='other player ready',
                                    username=self.owner.username)
 
         if self.player_task.done() and self.owner_task.done():
-            await self.broadcast(kind='next scene', name='game')
+            await asyncio.gather(
+                self.player.write(kind='next scene', name='game',
+                                  otherhero=self.owner.hero.name),
+                self.owner.write(kind='next scene', name='game',
+                                  otherhero=self.player.hero.name)
+            )
+
+            await self.init_game()
+
+            self.state = STATE_GAME # at last!!
+
+    async def init_game(self):
+        # self.owner.hero.position =
 
     async def gameloop(self):
         """loops..."""
-        while self.state != STATE_CLOSED:
+        while self.state not in (STATE_CLOSED, STATE_CLOSING):
             await asyncio.sleep(.5)
             if self.state in (STATE_WAITING_OWNER, STATE_WAITING_REQUEST):
                 continue
 
             elif self.state == STATE_WAITING_REQUEST_REPLY:
-                if not await self.handle_player_request():
-                    continue # skip the rest of this loop
+                await self.handle_player_request():
+                continue # skip the rest of this loop
 
             elif self.state == STATE_HERO_SELECTION:
-                if not await self.handle_hero_selection():
-                    continue # as long as the players are choosing, we skip
+                self.handle_hero_selection():
+                continue # as long as the players are choosing, we skip
+
+            # here, the state must be STATE_GAME
+
+
+
+
 

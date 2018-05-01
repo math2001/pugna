@@ -38,7 +38,7 @@ class SelectHero:
                 fgcolor=TEXT_FG, bgcolor=None)
             surface.blit(paddedsurface, (10, r.bottom + 10))
             pygame.draw.rect(surface, (33, 33, 33), cardrect, 1)
-            self.cards.append((surface, cardrect.copy()))
+            self.cards.append((name, surface, cardrect.copy()))
 
         self.allcards = pygame.Surface((cardrect.width * 2 + margin,
             int(len(self.cards) / 2 + .5) * (cardrect.height + margin) - margin))
@@ -49,7 +49,7 @@ class SelectHero:
         self.originaltop = self.allcardsrect.top
 
         top = 0
-        for i, (s, r) in enumerate(self.cards):
+        for i, (n, s, r) in enumerate(self.cards):
             if i % 2 == 1:
                 r.left = cardrect.width + 20
             r.top = top
@@ -66,11 +66,15 @@ class SelectHero:
         # scrolled)
         if e.type not in (MOUSEMOTION, MOUSEBUTTONDOWN):
             return
+
         if not self.clip.collidepoint(e.pos):
             self.hovered = None
             return
+
         checkcollide = False
+        click = False
         if e.type == MOUSEBUTTONDOWN:
+            # scroll
             if e.button == 5 \
                     and self.allcardsrect.top < self.originaltop:
                 self.allcardsrect.top += self.scrollspeed
@@ -83,13 +87,24 @@ class SelectHero:
                 if self.hovered:
                     self.hovered.top -= self.scrollspeed
                 checkcollide = True
+            elif e.button == 1:
+                click = True
 
         if e.type == MOUSEMOTION or checkcollide:
             self.hovered = None
-            for _, r in self.cards:
+            for name, _, r in self.cards:
                 r = r.move(self.allcardsrect.topleft)
                 if r.collidepoint(e.pos):
                     self.hovered = r
+                    if click:
+                        await self.m.connection.write(kind='hero selected',
+                                                      name=name)
+                        res = await self.m.connection.read(kind='next scene',
+                                                           'name', 'otherhero')
+                        if res['name'] != 'game':
+                            log.critical("Got wrong scene name to focus "
+                                         f"{res['name']!r}, expecting 'game'")
+                        self.m.focus('game', res['otherhero'])
 
     async def render(self):
         self.m.screen.blit(self.title, self.titlerect)

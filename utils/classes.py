@@ -3,21 +3,15 @@ from json import JSONDecoder, JSONEncoder
 dec = JSONDecoder().decode
 enc = JSONEncoder().encode
 
-class PlayerPrivateStatus:
-    pass
-
 class Connection:
     def __init__(self, reader, writer):
         self.reader = reader
         self.writer = writer
         self.closed = False
 
-    async def read(self, *requiredkeys, kind=None):
-        """Checks if a req has the required keys, and reply with an error and
-        raises an exception. Otherwise, it simply returns the request.
-        """
+    @staticmethod
+    async def handle_dec(bytes, *requiredkeys, kind=None):
         requiredkeys += ('kind', )
-        res = (await self.reader.readline()).decode('utf-8')
         if not res:
             raise ConnectionClosed(f"Connection closed", self.reader)
         res = dec(res)
@@ -32,6 +26,13 @@ class Connection:
             raise InvalidMessage(f"Invalid kind for the reply. Got "
                                  f"{res['kind']!r}, expetected {kind!r}")
         return res
+
+    async def read(self, *args, **kwargs):
+        """Checks if a req has the required keys, and reply with an error and
+        raises an exception. Otherwise, it simply returns the request.
+        """
+        res = await self.reader.readline(*args, **kwargs)
+        return Connection.handle_dec(res)
 
     async def write(self, **kwargs):
         self.writer.write((enc(kwargs) + '\n').encode('utf-8'))
