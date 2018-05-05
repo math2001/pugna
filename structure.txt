@@ -1,0 +1,96 @@
+From the client hosting the game
+
+UserInfos {
+    name, uuid string
+}
+PlayerPublicStatus {
+    uuid string
+    health int
+    maxhealth int
+    position image.Point
+    abilitiesCooldown [4]int // ms until ready
+    state string (suppress, rooted)
+    rotation float64
+}
+
+PlayerPrivateStatus {
+    uuid string // client id
+    health int
+    maxhealth int
+    position image.Point
+    abilitiesCooldown [4]int // ms until ready
+    state string (suppress, rooted)
+    rotation float64
+
+    speed float64
+    permanantSpeed float64
+
+    damage float64
+    permanantDamage float64
+
+    armor float64
+    permanantArmor float64
+
+    trueDamage bool
+}
+
+ProjectileStatus {
+    position image.Point
+    kind int // used
+}
+
+InputState {
+	up, down, left, right, space bool
+	ability int
+	mousePosition image.Point
+}
+
+StatusUpdate {
+    kind string (update, finished, aborted)
+    [2]PlayerStatus
+    []ProjectileStatus
+    message string
+}
+
+Start client
+    Start GUI
+    Get uuid
+    Get name (from GUI)
+    Display menu
+
+Start server as host
+    Start server
+    Pass current client detail to server through parameter (record as owner)
+    Wait for owner to make a request
+    Store the reader/writer
+    Wait for other client to send request (a UserInfo)
+        Display request on GUI
+            No:
+                Send string "rejected"
+                Close connection
+                Go back to waiting
+            Yes:
+                Send string "accepted"
+
+    Send to both client "choose player" (clients display player selection)
+    Wait for reply from both clients with the name of the player (a string)
+
+    Send to both client "starting game" (client display waiting screen)
+    Compute starting position
+
+    Start game loop
+        Update players (PlayerPrivateStatus) from InputState
+        Update projectiles (ProjectileStatus)
+        Send to every client
+            StatusUpdate "update" message(nil)
+        Try to read InputState from client
+        If a player is dead
+            StatusUpdate "finished" message(uuid of winner)
+            break
+        If a client left
+            StatusUpdate "aborted" message("opponent left")
+            break
+
+    Close connections with clients
+    Close server
+
