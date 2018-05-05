@@ -40,7 +40,6 @@ ProjectileStatus {
 }
 
 InputState {
-    uuid string // client id
 	up, down, left, right, space bool
 	ability int
 	mousePosition image.Point

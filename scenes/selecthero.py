@@ -99,8 +99,8 @@ class SelectHero:
                     if click:
                         await self.m.connection.write(kind='hero selected',
                                                       name=name)
-                        res = await self.m.connection.read(kind='next scene',
-                                                           'name', 'otherhero')
+                        res = await self.m.connection.read('name', 'otherhero',
+                                                           kind='next scene',)
                         if res['name'] != 'game':
                             log.critical("Got wrong scene name to focus "
                                          f"{res['name']!r}, expecting 'game'")

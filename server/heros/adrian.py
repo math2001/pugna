@@ -1,3 +1,6 @@
+from pygame.rect import Rect
+from utils.math import *
+
 class Adrian:
 
     name = "Adrian"
@@ -12,8 +15,12 @@ class Adrian:
     DAMAGE = 30
     ARMOR = 0
     TRUE_DAMAGE = False
-    # the size of the personage
-    RADIUS = 7
+    # in seconds
+    COOLDOWNS = [1, 8, 23]
+
+    STONE_SPEED = 15
+    STONE_DAMAGE = 43
+    STONE_RECT = Rect(0, 0, 7, 7)
 
     def __init__(self):
         self.health = Adrian.MAX_HEALTH
@@ -21,7 +28,25 @@ class Adrian:
         self.damage = Adrian.DAMAGE
         self.armor = Adrian.ARMOR
         self.true_damage = Adrian.TRUE_DAMAGE
-        self.raduis = Adrian.radius
+
+        self.till_cooled = [0, 0, 0]
+
+        self.stone_speed = Adrian.STONE_SPEED
+        self.stone_damage = Adrian.STONE_DAMAGE
 
         # the center of hero
-        self.position = None
+        self.rect = Rect(0, 0, 40, 40)
+        # The input state will automatically be updated by the server
+        self.ipt = None
+
+    def stone_hit(self, player):
+        player.health -= self.stone_damage
+
+    def trigger_ability(self):
+        if self.ipt['ability'] == 0:
+            # throw basic stone that deals regular damage
+            self.new_projectile(speed=self.stone_speed,
+                                angle=anglebetween(self.rect.center,
+                                                   self.ipt['mousepos']),
+                                on_player_hit=self.stone_hit,
+                                rect=self.STONE_RECT.copy())

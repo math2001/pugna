@@ -1,7 +1,9 @@
 import asyncio
 import logging
+import time
 
 from utils.classes import *
+from server.map import *
 from server.heros import HEROS_DESCRIPTION, HEROS
 
 log = logging.getLogger(__name__)
@@ -30,11 +32,6 @@ class Server:
         # these are clients who haven't identified yet. They are kept here
         # so that we can close them in case the server is shutdown
         self.anonymous_clients = []
-
-        # these tasks are used to read both the player and the owner at the same
-        # time (so we don't use await, which would block)
-        self.player_task = None
-        self.owner_task = None
 
     def setstate(self, newvalue):
         log.info(f'Server{{{newvalue}}}')
@@ -68,10 +65,10 @@ class Server:
 
         self.state = STATE_CLOSING
 
-        if self.owner_task:
-            self.owner_task.cancel()
-        if self.player_task:
-            self.player_task.cancel()
+        if self.owner.task:
+            self.owner.task.cancel()
+        if self.player.task:
+            self.player.task.cancel()
 
         if self.owner:
             await self.owner.close()
@@ -161,9 +158,9 @@ class Server:
                                  heros_description=HEROS_DESCRIPTION)
 
             # these 2 tasks will be used by handle_hero_selection
-            self.owner_task = self.loop.create_task(
+            self.owner.task = self.loop.create_task(
                 self.owner.read('name', kind='chose hero'))
-            self.player_task = self.loop.create_task(
+            self.player.task = self.loop.create_task(
                 self.player.read('name', kind='chose hero'))
 
         elif req['state'] == 'declined':
@@ -183,21 +180,21 @@ class Server:
         # send it to the other player
 
         # TODO: handle wrong hero selection
-        if self.owner_task.done():
-            res = Connection.handle_dec(self.owner_task.result(), 'name',
+        if self.owner.task.done():
+            res = Connection.handle_dec(self.owner.task.result(), 'name',
                                         kind='hero selected')
             self.owner = HEROS[res['name']]
             await self.player.write(kind='other player ready',
                                     username=self.player.username)
 
-        if self.player_task.done():
-            res = Connection.handle_dec(self.owner_task.result(), 'name',
+        if self.player.task.done():
+            res = Connection.handle_dec(self.owner.task.result(), 'name',
                                         kind='hero selected')
-            self.player.hero = HEROS[self.owner_task.result]
+            self.player.hero = HEROS[self.owner.task.result]
             await self.owner.write(kind='other player ready',
                                    username=self.owner.username)
 
-        if self.player_task.done() and self.owner_task.done():
+        if self.player.task.done() and self.owner.task.done():
             await asyncio.gather(
                 self.player.write(kind='next scene', name='game',
                                   otherhero=self.owner.hero.name),
@@ -210,26 +207,73 @@ class Server:
             self.state = STATE_GAME # at last!!
 
     async def init_game(self):
-        # self.owner.hero.position =
+        """Start reading from the clients"""
+        self.map = Map()
+        self.owner.hero.rect.center = self.map.start1
+        self.player.hero.rect.center = self.map.start2
+
+    def update_client_input_state(self, client):
+        if not client.task.done():
+            return
+        client.hero.ipt = client.task.result()
+        args = 'up', 'down', 'left', 'right', 'space', 'mousepos', 'ability'
+        client.task = self.loop.create_task(
+            client.read(*args, kind='input state change')
+        )
+
+    def new_projectile(self, speed, angle, on_player_hit):
+        self.projectiles.apppend(Projectile(speed, angle, on_player_hit))
 
     async def gameloop(self):
         """loops..."""
+        last = time.time()
+        self.projectiles = []
         while self.state not in (STATE_CLOSED, STATE_CLOSING):
+
+            delta = time.time() - last
+            last = time.time()
+
             await asyncio.sleep(.5)
+
             if self.state in (STATE_WAITING_OWNER, STATE_WAITING_REQUEST):
                 continue
 
             elif self.state == STATE_WAITING_REQUEST_REPLY:
-                await self.handle_player_request():
+                await self.handle_player_request()
                 continue # skip the rest of this loop
 
             elif self.state == STATE_HERO_SELECTION:
-                self.handle_hero_selection():
+                self.handle_hero_selection()
                 continue # as long as the players are choosing, we skip
 
             # here, the state must be STATE_GAME
 
+            self.update_client_input_state(self.player)
+            self.update_client_input_state(self.owner)
+
+            self.player.hero.update(dt)
+            self.owner.hero.update(dt)
+
+            for pjt in self.projectiles:
+                pjt.update(dt)
+                if self.player.hero.rect.colliderect(pjt.rect):
+                    pjt.on_player_hit(self.player)
+                if self.owner.hero.rect.colliderect(pjt.rect):
+                    pjt.on_player_hit(self.owner)
 
 
+class Projectile:
 
+    def __init__(self, speed, angle, on_player_hit, rect):
+        # instead of computing x and y from the angle every frame, we compute it
+        # here once, store it, and then it's just +=
+        self.angle = angle
+        # (speedx, speedy)
+        self.sx = int(math.cos(self.angle) * speed + .5)
+        self.sy = int(math.sin(self.angle) * speed + .5)
+        self.on_player_hit = on_player_hit
+        self.rect = rect
+
+    def update(dt):
+        self.rect.move_ip(self.sx, self.xy)
 
