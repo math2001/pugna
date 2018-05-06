@@ -19,7 +19,7 @@ class Connection:
         self.w = writer
         self.r = reader
         self.state = 'open'
-        self.rtask = self.wtask = None
+        self.rtask = None
 
     async def read(self):
         """Reads from reader
@@ -62,15 +62,6 @@ class Connection:
             return res
 
         # otherwise, do nothing!
-
-    async def awrite(self):
-        """Same as aread"""
-        if self.wtask is None:
-            self.wtask = asyncio.ensure_future(self.write())
-        elif self.wtask.done():
-            res = self.wtask.result()
-            self.wtask = None
-            return res
 
     def close(self):
         """Doesn't actually close the socket. Just orders it to close

@@ -11,14 +11,25 @@ dec = json.JSONDecoder().decode
 
 class TestConnection(asynctest.TestCase):
 
+    async def eventually(self, fn, value, x=10, wait=0.1):
+        """Tests x times if the attribute is equal to value, awaiting a certain
+        amount of time.
+        """
+        for _ in range(x):
+            if await asyncio.coroutine(fn)() == value:
+                return True
+            await asyncio.sleep(wait)
+        self.fail(f"{obj.__class__.__name__!r} attribute {attr!r} hasn't been "
+                  f"set to {value!r} after {x * wait}s. Got "
+                  f"{getattr(obj, attr, None)!r}")
+
     async def setUp(self):
 
         def on_new_client(r, w):
             self.server_r = r
             self.server_w = w
 
-        self.server = await asyncio.start_server(on_new_client, '',
-                                                 PORT)
+        self.server = await asyncio.start_server(on_new_client, '', PORT)
         r, w = await asyncio.open_connection('localhost', PORT)
         self.connection = Connection(r, w)
 
@@ -60,8 +71,8 @@ class TestConnection(asynctest.TestCase):
         self.server_w.write((enc({'kind': 'message',
                                  'msg': 'hello world'}) + '\n').encode('utf-8'))
         await self.server_w.drain()
-        self.assertEqual(await self.connection.aread(), {"kind": "message",
-                                                         "msg": "hello world"})
+        await self.eventually(self.connection.aread, {"kind": "message",
+                                                      "msg": "hello world"})
 
     def test_close(self):
         self.connection.close()
