@@ -1,30 +1,19 @@
-import asynctest
 import asyncio
 
 from server import *
 from utils.connection import *
 from tests.constants import *
+from tests.aut import *
 
-class TestServer(asynctest.TestCase):
+class TestServer(Aut):
 
-    async def setUp(self):
+    async def before(self):
         self.server = Server('owner', self.loop)
         await self.server.start(PORT)
 
-    async def tearDown(self):
+    async def after(self):
         await self.server.shutdown()
         await self.loop.shutdown_asyncgens()
-
-    async def eventually(self, obj, attr, value, x=10, wait=0.1):
-        """Tests x times if the attribute is equal to value, awaiting a certain
-        amount of time.
-        """
-        for _ in range(x):
-            if getattr(obj, attr, None) == value:
-                return True
-            await asyncio.sleep(wait)
-        self.fail(f"{obj.__class__.__name__!r} attribute {attr!r} hasn't been "
-                  f"set to {value!r}. Got {getattr(obj, attr, None)!r}")
 
     async def newconnection(self):
         return Connection(*(await asyncio.open_connection('localhost', PORT)))
@@ -52,7 +41,7 @@ class TestServer(asynctest.TestCase):
         self.assertEqual(res, {'kind': 'identification state change',
                                'state': 'accepted'})
 
-        self.eventually(self.server, 'state', STATE_WAITING_REQUEST)
+        self.eventually(lambda: self.server.state, STATE_WAITING_REQUEST)
 
         # other player wants to join
         otherco = self.newconnection()
@@ -65,7 +54,7 @@ class TestServer(asynctest.TestCase):
         self.assertEqual(res[1], {'kind': 'request state change',
                                   'state': 'waiting for owner response'})
 
-        self.eventually(self.server, 'state', STATE_WAITING_REQUEST_REPLY)
+        self.eventually(lambda: self.server.state, STATE_WAITING_REQUEST_REPLY)
 
         # send reply from owner
         await ownerco.write(kind='request state change', state='accepted')
@@ -73,7 +62,7 @@ class TestServer(asynctest.TestCase):
         self.assertEqual(res, {'kind': 'request state change',
                                'state': 'accepted'})
 
-        self.eventually(self.server, 'state', STATE_HERO_SELECTION)
+        self.eventually(lambda: self.server.state, STATE_HERO_SELECTION)
 
         for res in asyncio.gather(ownerco.read(), otherco.read()):
             self.assertEqual(res['kind'], 'select hero')
@@ -82,7 +71,7 @@ class TestServer(asynctest.TestCase):
         await ownerco.write(kind='chose hero', hero='adrian')
         await otherco.write(kind='chose hero', hero='adrian')
 
-        self.eventually(self.server, 'state', STATE_GAME)
+        self.eventually(lambda: self.server.state, STATE_GAME)
 
         for res in asyncio.gather(ownerco.read(), otherco.read()):
             self.assertEqual(res['kind'], 'game update')
