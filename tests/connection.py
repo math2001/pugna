@@ -1,43 +1,38 @@
 # tests utils/connection.py
 
-import unittest
+import asynctest
 import asyncio
-from utils.connection import Connection
+from utils.connection import *
 from tests.constants import *
 import json
 
 enc = json.JSONEncoder().encode
 dec = json.JSONDecoder().decode
 
-class TestConnection(unittest.TestCase):
+class TestConnection(asynctest.TestCase):
 
-    def setUp(self):
-        self.loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(None)
+    async def setUp(self):
 
         def on_new_client(r, w):
             self.server_r = r
             self.server_w = w
 
-        self.server = self.loop.run_until_complete(asyncio.start_server(
-            on_new_client, '', PORT, loop=self.loop))
-        r, w = self.loop.run_until_complete(asyncio.open_connection(
-            'localhost', PORT, loop=self.loop))
+        self.server = await asyncio.start_server(on_new_client, '',
+                                                 PORT)
+        r, w = await asyncio.open_connection('localhost', PORT)
         self.connection = Connection(r, w)
 
-    def tearDown(self):
+    async def tearDown(self):
         self.server_w.close()
         self.server.close()
-        self.loop.run_until_complete(self.server.wait_closed())
+        await self.server.wait_closed()
         self.connection.w.close()
-        self.loop.run_until_complete(self.loop.shutdown_asyncgens())
-        self.loop.close()
+        await self.loop.shutdown_asyncgens()
 
         self.server = None
-        self.loop = None
         self.connection = None
 
-    def test_read(self):
+    async def test_read(self):
         args = (
             {'kind': 'test', 'arg': 'hello'},
             {'kind': 'hello'},
@@ -45,21 +40,28 @@ class TestConnection(unittest.TestCase):
         )
         for arg in args:
             self.server_w.write((enc(arg) + '\n').encode('utf-8'))
-            self.loop.run_until_complete(self.server_w.drain())
-            result = self.loop.run_until_complete(self.connection.read())
+            await self.server_w.drain()
+            result = await self.connection.read()
             self.assertEqual(arg, result)
 
-    def test_write(self):
+    async def test_write(self):
         args = (
             {'kind': 'test', 'arg': 'hello'},
             {'kind': 'hello'},
             {'kind': 'something', 'arg': 2, 'args': ['hello', 'world', 0.1]}
         )
         for arg in args:
-            self.loop.run_until_complete(self.connection.write(**arg))
-            result = dec(self.loop.run_until_complete(self.server_r.readline())\
-                         .decode('utf-8'))
+            await self.connection.write(**arg)
+            result = dec((await self.server_r.readline()).decode('utf-8'))
             self.assertEqual(arg, result)
+
+    async def test_aread(self):
+        self.assertEqual(await self.connection.aread(), None)
+        self.server_w.write((enc({'kind': 'message',
+                                 'msg': 'hello world'}) + '\n').encode('utf-8'))
+        await self.server_w.drain()
+        self.assertEqual(await self.connection.aread(), {"kind": "message",
+                                                         "msg": "hello world"})
 
     def test_close(self):
         self.connection.close()

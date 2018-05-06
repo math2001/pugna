@@ -5,4 +5,4 @@
 PORT = 9987
 
 # a timeout for a test to complete, in seconds
-TIMEOUT = 5
+TIMEOUT = 1

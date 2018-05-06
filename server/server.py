@@ -1,4 +1,5 @@
 import asyncio
+import time
 import logging
 from utils.connection import *
 
@@ -85,13 +86,21 @@ class Server:
         self.state = STATE_CLOSED
 
 
-    async def handle_new_connections(self):
-        for co in self.new_connections:
-            if self.state == STATE_WAITING_OWNER:
-                pass
-
     async def gameloop(self):
+
+        task_owner = None
+        task_other = None
+
+
+        last = time.time()
         while self.state not in (STATE_CLOSING, STATE_CLOSED):
+            dt = time.time() - last
+            last = time.time()
+
             await asyncio.sleep(.05)
 
-            await self.handle_new_connections()
+            if self.state in (STATE_WAITING_OWNER, STATE_WAITING_REQUEST):
+                for co in self.new_connections:
+                    if self.state == STATE_WAITING_OWNER:
+                        # if c
+                        pass

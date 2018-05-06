@@ -4,6 +4,9 @@ import json
 enc = json.JSONEncoder().encode
 dec = json.JSONDecoder().decode
 
+class ConnectionClosed(Exception):
+    pass
+
 class Connection:
 
     """Represents a connection with a server or a client
@@ -16,6 +19,7 @@ class Connection:
         self.w = writer
         self.r = reader
         self.state = 'open'
+        self.rtask = self.wtask = None
 
     async def read(self):
         """Reads from reader
@@ -44,6 +48,30 @@ class Connection:
         self.w.write((enc(kwargs) + '\n').encode('utf-8'))
         await self.w.drain()
 
+    async def aread(self):
+        """Reads from reader using tasks
+
+        Basically, you can call this as many times as you want, it'll read again
+        only once the previous read has been done. It returns None the task
+        isn't done, otherwise it returns the result"""
+        if self.rtask is None:
+            self.rtask = asyncio.ensure_future(self.read())
+        elif self.rtask.done():
+            res = self.rtask.result()
+            self.rtask = None
+            return res
+
+        # otherwise, do nothing!
+
+    async def awrite(self):
+        """Same as aread"""
+        if self.wtask is None:
+            self.wtask = asyncio.ensure_future(self.write())
+        elif self.wtask.done():
+            res = self.wtask.result()
+            self.wtask = None
+            return res
+
     def close(self):
         """Doesn't actually close the socket. Just orders it to close
         After a fair bit of googling, i came across this issue:
@@ -58,6 +86,10 @@ class Connection:
         """
         self.w.write_eof()
         self.w.close()
+        if self.rtask:
+            self.rtask.cancel()
+        if self.wtask:
+            self.wtask.cancel()
 
     def __repr__(self):
         return f"<Connection state={self.state!r}>"
