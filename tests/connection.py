@@ -23,7 +23,7 @@ class TestConnection(unittest.TestCase):
             on_new_client, '', PORT, loop=self.loop))
         r, w = self.loop.run_until_complete(asyncio.open_connection(
             'localhost', PORT, loop=self.loop))
-        self.connection = Connection(r, w, 'test connection')
+        self.connection = Connection(r, w)
 
     def tearDown(self):
         self.server_w.close()

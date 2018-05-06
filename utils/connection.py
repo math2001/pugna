@@ -12,11 +12,9 @@ class Connection:
     'kind' field
     """
 
-    def __init__(self, reader, writer, name):
+    def __init__(self, reader, writer):
         self.w = writer
         self.r = reader
-        # used to identify a connection. For debug purposes
-        self.name = name
         self.state = 'open'
 
     async def read(self):
@@ -62,10 +60,8 @@ class Connection:
         self.w.close()
 
     def __repr__(self):
-        return f"<Connection {self.name!r} state={self.state!r}>"
+        return f"<Connection state={self.state!r}>"
 
     def __str__(self):
         return repr(self)
-
-
 
