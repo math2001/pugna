@@ -21,9 +21,9 @@ class Client:
     def __init__(self, name):
         self.name = name
         # the connection
-        self.c = None
+        self.co = None
         # the status
-        self.s = None
+        self.st = None
 
     def __str__(self):
         return f"<Client {self.name!r} c={self.c} s={self.s}>"
@@ -75,21 +75,28 @@ class Server:
     async def shutdown(self):
         """Closes the connections and close the server"""
         self.state = STATE_CLOSING
-        if self.owner.c is not None:
-            self.owner.c.close()
-        if self.other.c is not None:
-            self.other.c.close()
+        if self.owner.co is not None:
+            self.owner.co.close()
+        if self.other.co is not None:
+            self.other.co.close()
 
         self.server.close()
         await self.server.wait_closed()
         self.task_gameloop.cancel()
         self.state = STATE_CLOSED
 
+    async def handle_new_connection(self, co):
+        if self.state == STATE_WAITING_OWNER:
+            res = await co.aread()
+            if not res:
+                return
+            if res['kind'] != 'identification':
+                raise NotImplementedError("Reply with error and close")
+            if res['uuid'] != self.owneruuid:
+                raise NotImplementedError("Reply with 'liar!' and close")
+            self.owner.co = co
 
     async def gameloop(self):
-
-        task_owner = None
-        task_other = None
 
         last = time.time()
         while self.state not in (STATE_CLOSING, STATE_CLOSED):
@@ -100,6 +107,4 @@ class Server:
 
             if self.state in (STATE_WAITING_OWNER, STATE_WAITING_REQUEST):
                 for co in self.new_connections:
-                    if self.state == STATE_WAITING_OWNER:
-                        # if c
-                        pass
+                    await self.handle_new_connection(co)

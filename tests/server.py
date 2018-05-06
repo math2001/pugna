@@ -34,7 +34,7 @@ class TestServer(Aut):
         self.assertEqual(self.server.state, STATE_WAITING_OWNER)
 
         ownerco = await self.newconnection()
-        await ownerco.write(kind='identification', by='owner', uuid='owner',
+        await ownerco.write(kind='identification', uuid='owner',
                                 username='owner username')
 
         res = await ownerco.read()
