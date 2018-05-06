@@ -79,8 +79,6 @@ class Connection:
         self.w.close()
         if self.rtask:
             self.rtask.cancel()
-        if self.wtask:
-            self.wtask.cancel()
 
     def __repr__(self):
         return f"<Connection state={self.state!r}>"

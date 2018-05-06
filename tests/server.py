@@ -9,7 +9,8 @@ def timeout(secs=TIMEOUT):
     def decorator(fn):
         async def wrapper(self, *args, **kwargs):
             try:
-                return await asyncio.wait_for(fn(self, *args, **kwargs), timeout=secs)
+                return await asyncio.wait_for(fn(self, *args, **kwargs),
+                                              timeout=secs)
             except asyncio.TimeoutError as e:
                 return self.fail(f'Timeout ({secs}s): {fn}')
         return wrapper

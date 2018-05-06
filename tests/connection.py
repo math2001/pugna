@@ -1,15 +1,15 @@
 # tests utils/connection.py
 
-import asynctest
 import asyncio
 from utils.connection import *
 from tests.constants import *
+from tests.aut import *
 import json
 
 enc = json.JSONEncoder().encode
 dec = json.JSONDecoder().decode
 
-class TestConnection(asynctest.TestCase):
+class TestConnection(Aut):
 
     async def eventually(self, fn, value, x=10, wait=0.1):
         """Tests x times if the attribute is equal to value, awaiting a certain
@@ -23,7 +23,7 @@ class TestConnection(asynctest.TestCase):
                   f"set to {value!r} after {x * wait}s. Got "
                   f"{getattr(obj, attr, None)!r}")
 
-    async def setUp(self):
+    async def set_up(self):
 
         def on_new_client(r, w):
             self.server_r = r
@@ -33,7 +33,7 @@ class TestConnection(asynctest.TestCase):
         r, w = await asyncio.open_connection('localhost', PORT)
         self.connection = Connection(r, w)
 
-    async def tearDown(self):
+    async def tear_down(self):
         self.server_w.close()
         self.server.close()
         await self.server.wait_closed()

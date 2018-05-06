@@ -11,7 +11,7 @@ for i, path in enumerate(sys.path):
         sys.path[i] = os.getcwd()
 
 from tests.connection import TestConnection
-# from tests.server import TestServer
+from tests.server import TestServer
 
 if __name__ == '__main__':
     unittest.main()

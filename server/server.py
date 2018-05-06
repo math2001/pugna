@@ -91,7 +91,6 @@ class Server:
         task_owner = None
         task_other = None
 
-
         last = time.time()
         while self.state not in (STATE_CLOSING, STATE_CLOSED):
             dt = time.time() - last
