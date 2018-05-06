@@ -11,19 +11,8 @@ dec = json.JSONDecoder().decode
 
 class TestConnection(Aut):
 
-    async def eventually(self, fn, value, x=10, wait=0.1):
-        """Tests x times if the attribute is equal to value, awaiting a certain
-        amount of time.
-        """
-        for _ in range(x):
-            if await asyncio.coroutine(fn)() == value:
-                return True
-            await asyncio.sleep(wait)
-        self.fail(f"{obj.__class__.__name__!r} attribute {attr!r} hasn't been "
-                  f"set to {value!r} after {x * wait}s. Got "
-                  f"{getattr(obj, attr, None)!r}")
-
-    async def set_up(self):
+    async def before(self):
+        """Create new server every test"""
 
         def on_new_client(r, w):
             self.server_r = r
@@ -33,7 +22,7 @@ class TestConnection(Aut):
         r, w = await asyncio.open_connection('localhost', PORT)
         self.connection = Connection(r, w)
 
-    async def tear_down(self):
+    async def after(self):
         self.server_w.close()
         self.server.close()
         await self.server.wait_closed()
