@@ -34,8 +34,11 @@ class Aut(unittest.TestCase):
 
     def decorate(self, fn):
         def wrapper(*args, **kwargs):
-            return self.loop.run_until_complete(asyncio.wait_for(
-                fn(*args, **kwargs), self.TIMEOUT))
+            try:
+                return self.loop.run_until_complete(asyncio.wait_for(
+                    fn(*args, **kwargs), self.TIMEOUT))
+            except asyncio.TimeoutError as e:
+                return self.fail(f'Timeout ({self.TIMEOUT}s): {fn}')
         return wrapper
 
     async def eventually(self, fn, value, x=10, wait=0.1):
@@ -67,10 +70,10 @@ async def bonjour():
 
 class TestSomething(Aut):
 
-    async def set_up(self):
+    async def before(self):
         self.computed = await hello()
 
-    async def tear_down(self):
+    async def after(self):
         del self.computed
 
     async def test_hello(self):
@@ -79,6 +82,7 @@ class TestSomething(Aut):
 
     async def test_bonjour(self):
         self.assertEqual(await bonjour(), 'bonjour')
+        await asyncio.sleep(1.1)
 
 if __name__ == "__main__":
     unittest.main()
