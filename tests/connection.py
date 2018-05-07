@@ -2,7 +2,7 @@
 
 import asyncio
 from utils.connection import *
-from tests.constants import *
+from constants import *
 from tests.aut import *
 import json
 

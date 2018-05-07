@@ -3,7 +3,7 @@ import sys
 import os
 import logging
 
-logging.basicConfig(level=logging.INFO,
+logging.basicConfig(level=logging.DEBUG,
                     filename='tests.log',
                     filemode='w',
                     format='{asctime} {levelname:<5} {name:<15} {message}',

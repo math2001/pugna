@@ -2,7 +2,7 @@ import asyncio
 
 from server import *
 from utils.connection import *
-from tests.constants import *
+from constants import *
 from tests.aut import *
 
 class TestServer(Aut):
@@ -33,36 +33,43 @@ class TestServer(Aut):
 
         self.assertEqual(self.server.state, STATE_WAITING_OWNER)
 
+        # create owner connection
         ownerco = await self.newconnection()
+        # log into the server
         await ownerco.write(kind='identification', uuid='owner',
                                 username='owner username')
 
+        return
         res = await ownerco.read()
         self.assertEqual(res, {'kind': 'identification state change',
                                'state': 'accepted'})
 
-        self.eventually(lambda: self.server.state, STATE_WAITING_REQUEST)
+        await self.eventually(lambda: self.server.state,
+                              STATE_WAITING_REQUEST)
 
-        # other player wants to join
-        otherco = self.newconnection()
+        # We create a new player and ask the owner to join
+        otherco = await self.newconnection()
         await otherco.write(kind='new request', uuid='other',
                                 username='other username')
 
-        res = asyncio.gather(ownerco.read(), otherco.read())
+        # check if the owner recieved the request, and if the other recieved the
+        # confirmation (that his request had been sent)
+        res = await asyncio.gather(ownerco.read(), otherco.read())
         self.assertEqual(res[0], {'kind': 'new request',
-                                  'from': 'other username'})
+                                  'by': 'other username'})
         self.assertEqual(res[1], {'kind': 'request state change',
                                   'state': 'waiting for owner response'})
 
-        self.eventually(lambda: self.server.state, STATE_WAITING_REQUEST_REPLY)
+        await self.eventually(lambda: self.server.state,
+                              STATE_WAITING_REQUEST_REPLY)
 
-        # send reply from owner
+        # send reply from owner (he accepts it)
         await ownerco.write(kind='request state change', state='accepted')
         res = await otherco.read()
         self.assertEqual(res, {'kind': 'request state change',
                                'state': 'accepted'})
 
-        self.eventually(lambda: self.server.state, STATE_HERO_SELECTION)
+        await self.eventually(lambda: self.server.state, STATE_HERO_SELECTION)
 
         for res in asyncio.gather(ownerco.read(), otherco.read()):
             self.assertEqual(res['kind'], 'select hero')
@@ -71,7 +78,7 @@ class TestServer(Aut):
         await ownerco.write(kind='chose hero', hero='adrian')
         await otherco.write(kind='chose hero', hero='adrian')
 
-        self.eventually(lambda: self.server.state, STATE_GAME)
+        await self.eventually(lambda: self.server.state, STATE_GAME)
 
         for res in asyncio.gather(ownerco.read(), otherco.read()):
             self.assertEqual(res['kind'], 'game update')

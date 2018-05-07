@@ -1,7 +1,10 @@
 import asyncio
 import unittest
+import logging
 
 __all__ = ["Aut"]
+
+log = logging.getLogger(__name__)
 
 class Aut(unittest.TestCase):
 
@@ -21,12 +24,16 @@ class Aut(unittest.TestCase):
         super().__init__(*args, **kwargs)
 
     def setUp(self):
+        log.debug("set up")
+        print('set up')
         self.loop = asyncio.new_event_loop()
         asyncio.set_event_loop(self.loop)
         self.loop.run_until_complete(asyncio.coroutine(getattr(self, 'before',
                                                                lambda: None))())
 
     def tearDown(self):
+        log.debug("tear down")
+        print('tear down')
         self.loop.run_until_complete(asyncio.coroutine(getattr(self, 'after',
                                                                lambda: None))())
         self.loop.stop()
@@ -34,6 +41,7 @@ class Aut(unittest.TestCase):
 
     def decorate(self, fn):
         def wrapper(*args, **kwargs):
+            return self.loop.run_until_complete(fn(*args, **kwargs))
             try:
                 return self.loop.run_until_complete(asyncio.wait_for(
                     fn(*args, **kwargs), self.TIMEOUT))
@@ -68,6 +76,14 @@ async def hello():
 async def bonjour():
     return 'bonjour'
 
+# import asynctest
+
+# class Aut(asynctest.TestCase):
+#     pass
+
+# Aut.before = Aut.setUp
+# Aut.after = Aut.tearDown
+
 class TestSomething(Aut):
 
     async def before(self):
@@ -82,7 +98,6 @@ class TestSomething(Aut):
 
     async def test_bonjour(self):
         self.assertEqual(await bonjour(), 'bonjour')
-        await asyncio.sleep(1.1)
 
 if __name__ == "__main__":
     unittest.main()
