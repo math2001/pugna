@@ -52,7 +52,7 @@ class Connection:
         self.w.write((enc(kwargs) + '\n').encode('utf-8'))
         await self.w.drain()
 
-    async def aread(self):
+    def aread(self):
         """Reads from reader using tasks
 
         Basically, you can call this as many times as you want, it'll read again

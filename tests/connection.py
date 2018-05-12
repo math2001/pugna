@@ -56,7 +56,7 @@ class TestConnection(Aut):
             self.assertEqual(arg, result)
 
     async def test_aread(self):
-        self.assertEqual(await self.connection.aread(), None)
+        self.assertEqual(self.connection.aread(), None)
         self.server_w.write((enc({'kind': 'message',
                                  'msg': 'hello world'}) + '\n').encode('utf-8'))
         await self.server_w.drain()

@@ -12,13 +12,20 @@ STATE_WAITING_OWNER = 'Waiting for the owner to connect'
 STATE_WAITING_REQUEST = 'Waiting for a player to join'
 STATE_WAITING_REQUEST_REPLY = 'Waiting for the owner to reply'
 STATE_HERO_SELECTION = 'Waiting for players to choose their hero'
-STATE_GAME = "Playing!"
+STATE_GAME = "Game"
 STATE_CLOSING = 'Closing'
 STATE_CLOSED = 'Closed'
 
 def handle_exception(fut):
-    if fut.exception():
-        fut.result()
+    try:
+        exc = fut.exception()
+    except asyncio.CancelledError:
+        return
+    fut.result()
+
+def new_hero(name):
+    """Fake thing to create a hero"""
+    return f"A brand new hero answering to the name of {name}"
 
 class Client:
     """Used to represent a client"""
@@ -124,7 +131,7 @@ class Server:
             self.pending = None
 
         if self.pending:
-            res = await self.pending.aread()
+            res = self.pending.aread()
 
         if not self.pending or not res:
             # haven't finished reading from the connection or there is no
@@ -164,7 +171,7 @@ class Server:
     async def handle_requests(self):
         if self.state not in (STATE_WAITING_REQUEST_REPLY, ):
             return
-        res = await self.owner.co.aread()
+        res = self.owner.co.aread()
         if not res:
             return
         if res['kind'] != 'request state change':
@@ -174,6 +181,8 @@ class Server:
             await self.other.co.write(kind='request state change',
                                       state='accepted')
             self.state = STATE_HERO_SELECTION
+            await self.broadcast(kind='select hero', heros={
+                'cool name': 'cool story'})
 
         elif res['state'] == 'refused':
             # send refused and close
@@ -186,6 +195,32 @@ class Server:
         else:
             raise NotImplementedError("Handle invalid state for request")
 
+    async def broadcast(self, *args, **kwargs):
+        await asyncio.gather(self.owner.co.write(*args, **kwargs),
+                             self.other.co.write(*args, **kwargs))
+
+    async def handle_hero_selection(self):
+        if self.state != STATE_HERO_SELECTION:
+            return
+
+        for client in (self.owner, self.other):
+            res = client.co.aread()
+            if not res:
+                continue
+            if res['kind'] != 'chose hero':
+                raise NotImplementedError("Invalid kind for hero selection. "
+                                          f"Got {res['kind']!r} instead of "
+                                          "'chose hero'")
+            client.st = new_hero(res['hero'])
+
+        if self.owner.st and self.other.st:
+            self.state = STATE_GAME
+
+    async def handle_game(self):
+        """Game on!"""
+        if self.state != STATE_GAME:
+            return
+
     async def gameloop(self):
         last = time.time()
         while self.state not in (STATE_CLOSING, STATE_CLOSED):
@@ -194,6 +229,11 @@ class Server:
 
             await asyncio.sleep(.05)
 
+            # quick note: we could call these functions in any order, since they
+            # don't block the loop in any way, everything is based on the state
+            # of the server
             await self.handle_new_connections()
             await self.handle_requests()
+            await self.handle_hero_selection()
+            await self.handle_game()
 

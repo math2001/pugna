@@ -17,7 +17,7 @@ class Aut(unittest.TestCase):
     """
 
     # timeout for every tests in seconds
-    TIMEOUT = 0.5
+    TIMEOUT = 5
 
     def __init__(self, *args, **kwargs):
         self._func_cache = {}
@@ -53,7 +53,7 @@ class Aut(unittest.TestCase):
             self.fail(f'Timeout ({self.TIMEOUT}s): {fn}')
         return wrapper
 
-    async def eventually(self, fn, value, x=10, wait=0.1):
+    async def eventually(self, fn, value, x=10, wait=0.05):
         """Tests x times if the attribute is equal to value, awaiting a certain
         amount of time.
         """
@@ -61,9 +61,7 @@ class Aut(unittest.TestCase):
             if await asyncio.coroutine(fn)() == value:
                 return True
             await asyncio.sleep(wait)
-        self.fail(f"{obj.__class__.__name__!r} attribute {attr!r} hasn't been "
-                  f"set to {value!r} after {x * wait}s. Got "
-                  f"{getattr(obj, attr, None)!r}")
+        self.fail(f"Function {fn} did not return {value!r} after {x * wait}s")
 
     def __getattribute__(self, name):
         attr = object.__getattribute__(self, name)
