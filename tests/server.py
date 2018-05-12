@@ -16,7 +16,9 @@ class TestServer(Aut):
         await self.loop.shutdown_asyncgens()
 
     async def newconnection(self):
-        return Connection(*(await asyncio.open_connection('localhost', PORT)))
+        co = Connection(*(await asyncio.open_connection('localhost', PORT)))
+        log.debug(f"Create new connection {co!r}")
+        return co
 
     async def test_classic(self):
         """Test the server has a whole for a classic connection.
@@ -39,8 +41,8 @@ class TestServer(Aut):
         await ownerco.write(kind='identification', uuid='owner',
                                 username='owner username')
 
-        return
         res = await ownerco.read()
+        return
         self.assertEqual(res, {'kind': 'identification state change',
                                'state': 'accepted'})
 

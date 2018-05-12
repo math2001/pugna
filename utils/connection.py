@@ -21,6 +21,10 @@ class Connection:
         self.state = 'open'
         self.rtask = None
 
+        s = ':'.join(str(x) for x in self.w.get_extra_info('sockname')[:2])
+        p = ':'.join(str(x) for x in self.w.get_extra_info('peername')[:2])
+        self._path = f"{s} to {p}"
+
     async def read(self):
         """Reads from reader
 
@@ -81,7 +85,7 @@ class Connection:
             self.rtask.cancel()
 
     def __repr__(self):
-        return f"<Connection state={self.state!r}>"
+        return f"<Connection {self._path} state={self.state!r}>"
 
     def __str__(self):
         return repr(self)

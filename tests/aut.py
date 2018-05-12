@@ -24,29 +24,26 @@ class Aut(unittest.TestCase):
         super().__init__(*args, **kwargs)
 
     def setUp(self):
-        log.debug("set up")
-        print('set up')
         self.loop = asyncio.new_event_loop()
         asyncio.set_event_loop(self.loop)
-        self.loop.run_until_complete(asyncio.coroutine(getattr(self, 'before',
-                                                               lambda: None))())
+        if hasattr(self, 'before'):
+            if not asyncio.iscoroutinefunction(self.before):
+                self.loop.run_until_complete(asyncio.coroutine(self.before)())
+            else:
+                self.loop.run_until_complete(self.before())
 
     def tearDown(self):
-        log.debug("tear down")
-        print('tear down')
-        self.loop.run_until_complete(asyncio.coroutine(getattr(self, 'after',
-                                                               lambda: None))())
+        if hasattr(self, 'after'):
+            if not asyncio.iscoroutinefunction(self.after):
+                self.loop.run_until_complete(asyncio.coroutine(self.after)())
+            else:
+                self.loop.run_until_complete(self.after())
         self.loop.stop()
         self.loop.close()
 
     def decorate(self, fn):
         def wrapper(*args, **kwargs):
             return self.loop.run_until_complete(fn(*args, **kwargs))
-            try:
-                return self.loop.run_until_complete(asyncio.wait_for(
-                    fn(*args, **kwargs), self.TIMEOUT))
-            except asyncio.TimeoutError as e:
-                return self.fail(f'Timeout ({self.TIMEOUT}s): {fn}')
         return wrapper
 
     async def eventually(self, fn, value, x=10, wait=0.1):
@@ -65,6 +62,7 @@ class Aut(unittest.TestCase):
         attr = object.__getattribute__(self, name)
         if asyncio.iscoroutinefunction(attr):
             if name.startswith('test_'):
+                # return self.decorate(attr)
                 if name not in self._func_cache:
                     self._func_cache[name] = self.decorate(attr)
                 return self._func_cache[name]

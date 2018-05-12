@@ -3,10 +3,10 @@ import sys
 import os
 import logging
 
-logging.basicConfig(level=logging.DEBUG,
+logging.basicConfig(level=logging.INFO,
                     filename='tests.log',
                     filemode='w',
-                    format='{asctime} {levelname:<5} {name:<15} {message}',
+                    format='{levelname:<8} {name:<15} {message}',
                     style='{')
 
 # only use absoute imports. The dirname of the current script is always added

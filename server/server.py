@@ -1,4 +1,5 @@
 import asyncio
+import traceback
 import time
 import logging
 from utils.connection import *
@@ -57,21 +58,25 @@ class Server:
         # the player who joins the game
         self.other = Client("other")
 
+        # this is a pending connection. It hasn't been accepted as the
+        # onwer/other yet, but we still need keep contact with him.
+        # !! It's not a Client, but still just a Connection
+        self.pending = None
+
         self.task_gameloop = None
 
         self.new_connections = []
 
     async def start(self, port):
         def new_co(r, w):
-            log.debug("Got new connection")
+            log.info("Got new connection")
             self.new_connections.append(Connection(r, w))
 
         self.state = STATE_STARTING
         self.server = await asyncio.start_server(new_co, "localhost", port)
 
         self.state = STATE_WAITING_OWNER
-        self.task_gameloop = self.loop.create_task(self.gameloop_handler())
-        # await self.task_gameloop
+        self.task_gameloop = self.loop.create_task(self.gameloop())
 
     async def shutdown(self):
         """Closes the connections and close the server"""
@@ -90,27 +95,37 @@ class Server:
 
     async def handle_new_connections(self):
         """Handles new connections. Makes the match, and once it's done, reject
-        every person who wants to join"""
+        every person who wants to join.
 
-        1/0
+        This functions never blocks the execution to wait for something. For
+        example, instead of using co.read(), we use co.aread() which returns
+        None if we haven't finished reading yet.
+        """
+
+        if self.pending is None and len(self.new_connections) > 0:
+            self.pending = self.new_connections.pop(0)
+            log.info(f"Managing new connection: {self.pending}")
+
+        if self.pending:
+            res = await self.pending.aread()
+        if not self.pending or not res:
+            # haven't finished reading from the connection or there is no
+            # pending connection. We'll check during the next iteration
+            return
+
         if self.state == STATE_WAITING_OWNER:
-            if len(self.new_connections) == 0:
-                return
-            co = self.new_connections[0]
-            del self.new_connections[0]
-            res = await co.aread()
-            if not res:
-                return
             if res['kind'] != 'identification':
                 raise NotImplementedError("Reply with error and close")
             if res['uuid'] != self.owneruuid:
                 raise NotImplementedError("Reply with 'liar!' and close")
 
-            await co.write(kind='identification state change', state='accepted')
-            self.owner.co = co
+            await self.pending.write(kind='identification state change', state='accepted')
+            self.owner.co = self.pending
+            self.pending = None
             self.state = STATE_WAITING_REQUEST
 
         elif self.state == STATE_WAITING_REQUEST:
+            return
             if res['kind'] != 'new request':
                 raise NotImplementedError("Reply with error (expecting "
                                           "request) and close")
@@ -122,28 +137,12 @@ class Server:
                 self.owner.co.write(kind='new request', by=res['username']),
                 self.other.co.write(kind='request state change',
                                     state='waiting for owner response'))
-
-    async def gameloop_handler(self):
-        try:
-            await self.gameloop()
-        except Exception as e:
-            log.critical("Got error in game loop")
-            # self.task_gameloop.cancel()
-            log.debug(f'raise {e}')
-            # await self.shutdown()
-            raise e
-
     async def gameloop(self):
-        raise ValueError('hello world')
         last = time.time()
         while self.state not in (STATE_CLOSING, STATE_CLOSED):
-            print('going')
             dt = time.time() - last
             last = time.time()
 
             await asyncio.sleep(.05)
 
-            1/0
-            # await self.handle_new_connections()
-            print('start again')
-        print('quit loop')
+            await self.handle_new_connections()
