@@ -35,9 +35,6 @@ class TestServer(Aut):
 
         self.assertEqual(self.server.state, STATE_WAITING_OWNER)
 
-        print(self.loop)
-        print(asyncio.Task.current_task())
-        print(self.server.task_gameloop)
         # create owner connection
         ownerco = await self.newconnection()
         # log into the server
