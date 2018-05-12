@@ -14,7 +14,6 @@ class TestServer(Aut):
     async def after(self):
         await self.server.shutdown()
         await self.loop.shutdown_asyncgens()
-
     async def newconnection(self):
         co = Connection(*(await asyncio.open_connection('localhost', PORT)))
         log.debug(f"Create new connection {co!r}")
@@ -42,7 +41,6 @@ class TestServer(Aut):
                                 username='owner username')
 
         res = await ownerco.read()
-        return
         self.assertEqual(res, {'kind': 'identification state change',
                                'state': 'accepted'})
 

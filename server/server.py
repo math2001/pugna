@@ -20,7 +20,6 @@ def handle_exception(fut):
     if fut.exception():
         fut.result()
 
-
 class Client:
     """Used to represent a client"""
     def __init__(self, name):
@@ -31,7 +30,7 @@ class Client:
         self.st = None
 
     def __str__(self):
-        return f"<Client {self.name!r} c={self.c} s={self.s}>"
+        return f"<Client {self.name!r} co={self.co} st={self.st}>"
 
     def __repr__(self):
         return str(self)
@@ -73,7 +72,7 @@ class Server:
 
     async def start(self, port):
         def new_co(r, w):
-            log.info("Got new connection")
+            log.debug("Got new connection")
             self.new_connections.append(Connection(r, w))
 
         self.state = STATE_STARTING
@@ -108,14 +107,25 @@ class Server:
         This functions never blocks the execution to wait for something. For
         example, instead of using co.read(), we use co.aread() which returns
         None if we haven't finished reading yet.
+
+        Note that this method is called from the game loop. It isn't "attached"
+        to the client or anything
         """
 
         if self.pending is None and len(self.new_connections) > 0:
             self.pending = self.new_connections.pop(0)
-            log.info(f"Managing new connection: {self.pending}")
+            log.debug(f"Managing new connection: {self.pending}")
+
+        # we have every client nice and ready, why bother?
+        if self.owner.co and self.other.co and self.pending:
+            self.pending.write(kind='request state change',
+                               state='rejected by server')
+            await self.pending.close()
+            self.pending = None
 
         if self.pending:
             res = await self.pending.aread()
+
         if not self.pending or not res:
             # haven't finished reading from the connection or there is no
             # pending connection. We'll check during the next iteration
@@ -130,22 +140,27 @@ class Server:
             await self.pending.write(kind='identification state change',
                                      state='accepted')
             self.owner.co = self.pending
+            log.info(f'Got owner: {self.owner}')
             self.pending = None
             self.state = STATE_WAITING_REQUEST
 
         elif self.state == STATE_WAITING_REQUEST:
-            return
             if res['kind'] != 'new request':
                 raise NotImplementedError("Reply with error (expecting "
                                           "request) and close")
             if res['uuid'] == self.owneruuid:
                 raise NotImplementedError("Reply with error (can't join own "
                                           "game)")
+            self.other.co = self.pending
+            self.pending = None
+            log.info(f'Got other: {self.other}')
             # send request to owner, and confirmation to the other
             await asyncio.gather(
                 self.owner.co.write(kind='new request', by=res['username']),
                 self.other.co.write(kind='request state change',
                                     state='waiting for owner response'))
+            self.state = STATE_WAITING_REQUEST_REPLY
+
     async def gameloop(self):
         last = time.time()
         while self.state not in (STATE_CLOSING, STATE_CLOSED):
@@ -155,3 +170,4 @@ class Server:
             await asyncio.sleep(.05)
 
             await self.handle_new_connections()
+
