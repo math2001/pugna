@@ -65,13 +65,14 @@ class TestServer(Aut):
 
         # send reply from owner (he accepts it)
         await ownerco.write(kind='request state change', state='accepted')
+
         res = await otherco.read()
         self.assertEqual(res, {'kind': 'request state change',
                                'state': 'accepted'})
 
         await self.eventually(lambda: self.server.state, STATE_HERO_SELECTION)
 
-        for res in asyncio.gather(ownerco.read(), otherco.read()):
+        for res in await asyncio.gather(ownerco.read(), otherco.read()):
             self.assertEqual(res['kind'], 'select hero')
             self.assertIsInstance(res['heros'], dict)
 

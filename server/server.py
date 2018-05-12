@@ -140,7 +140,7 @@ class Server:
             await self.pending.write(kind='identification state change',
                                      state='accepted')
             self.owner.co = self.pending
-            log.info(f'Got owner: {self.owner}')
+            log.debug(f'Got owner: {self.owner}')
             self.pending = None
             self.state = STATE_WAITING_REQUEST
 
@@ -153,13 +153,38 @@ class Server:
                                           "game)")
             self.other.co = self.pending
             self.pending = None
-            log.info(f'Got other: {self.other}')
+            log.debug(f'Got other: {self.other}')
             # send request to owner, and confirmation to the other
             await asyncio.gather(
                 self.owner.co.write(kind='new request', by=res['username']),
                 self.other.co.write(kind='request state change',
                                     state='waiting for owner response'))
             self.state = STATE_WAITING_REQUEST_REPLY
+
+    async def handle_requests(self):
+        if self.state not in (STATE_WAITING_REQUEST_REPLY, ):
+            return
+        res = await self.owner.co.aread()
+        if not res:
+            return
+        if res['kind'] != 'request state change':
+            raise NotImplementedError(f"Expected kind to be 'request state "
+                                      f"change', got {res['kind']!r} instead")
+        if res['state'] == 'accepted':
+            await self.other.co.write(kind='request state change',
+                                      state='accepted')
+            self.state = STATE_HERO_SELECTION
+
+        elif res['state'] == 'refused':
+            # send refused and close
+            # TODO: test this part
+            await self.other.co.write(kind='request state change',
+                                   state='refused')
+            await self.other.co.close()
+            self.other.co = None
+            self.state = STATE_WAITING_REQUEST
+        else:
+            raise NotImplementedError("Handle invalid state for request")
 
     async def gameloop(self):
         last = time.time()
@@ -170,4 +195,5 @@ class Server:
             await asyncio.sleep(.05)
 
             await self.handle_new_connections()
+            await self.handle_requests()
 
