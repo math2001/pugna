@@ -14,6 +14,7 @@ class TestServer(Aut):
     async def after(self):
         await self.server.shutdown()
         await self.loop.shutdown_asyncgens()
+
     async def newconnection(self):
         co = Connection(*(await asyncio.open_connection('localhost', PORT)))
         log.debug(f"Create new connection {co!r}")
@@ -90,3 +91,39 @@ class TestServer(Aut):
             self.assertContains(res['hero state'], 'health', 'maxhealth',
                                 'position', 'abilitiesCooldown', 'state',
                                 'rotation')
+
+    async def test_wrong_owner(self):
+        """Test the matchmaking where the owner sends in the wrong uuid"""
+
+        self.assertEqual(self.server.state, STATE_WAITING_OWNER)
+
+        owner = await self.newconnection()
+        await owner.write(kind='identification', uuid='WRONG owner',
+                          username='owner username')
+
+        res = await owner.read()
+        self.assertEqual(res, {'kind': 'identification state change',
+                               'state': 'refused'})
+
+        with self.assertRaises(ConnectionClosed):
+            await owner.read()
+
+        self.assertEqual(self.server.state, STATE_WAITING_OWNER)
+
+        owner = await self.newconnection()
+        # this time, we login with the right username
+        await owner.write(kind='identification', uuid='owner',
+                          username='owner username')
+
+        res = await owner.read()
+        self.assertEqual(res, {'kind': 'identification state change',
+                               'state': 'accepted'})
+
+
+    async def test_more_client(self):
+        """Send an other request when there is already a owner and an other"""
+
+
+    async def test_refused_requests(self):
+        """Test handling of requests refused by the owner"""
+

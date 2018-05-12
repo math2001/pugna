@@ -17,7 +17,7 @@ class Aut(unittest.TestCase):
     """
 
     # timeout for every tests in seconds
-    TIMEOUT = 5
+    TIMEOUT = 1
 
     def __init__(self, *args, **kwargs):
         self._func_cache = {}

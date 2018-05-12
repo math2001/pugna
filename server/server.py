@@ -119,33 +119,46 @@ class Server:
         to the client or anything
         """
 
+        # if we have no pending connection, and there are some connections to
+        # handle, then we set the pending connection to the first connection
         if self.pending is None and len(self.new_connections) > 0:
             self.pending = self.new_connections.pop(0)
             log.debug(f"Managing new connection: {self.pending}")
 
         # we have every client nice and ready, why bother?
         if self.owner.co and self.other.co and self.pending:
+            log.debug(f"Reject pending connection {self.pending} (enough "
+                      "clients)")
             self.pending.write(kind='request state change',
                                state='rejected by server')
             await self.pending.close()
             self.pending = None
+            return
 
+        # non blocking read
         if self.pending:
             res = self.pending.aread()
 
+        # haven't finished reading from the connection or there is no pending
+        # connection. We'll check during the next iteration
         if not self.pending or not res:
-            # haven't finished reading from the connection or there is no
-            # pending connection. We'll check during the next iteration
             return
 
         if self.state == STATE_WAITING_OWNER:
+
             if res['kind'] != 'identification':
                 raise NotImplementedError("Reply with error and close")
+
             if res['uuid'] != self.owneruuid:
-                raise NotImplementedError("Reply with 'liar!' and close")
+                await self.pending.write(kind='identification state change',
+                                         state='refused')
+                self.pending.close()
+                self.pending = None
+                return
 
             await self.pending.write(kind='identification state change',
                                      state='accepted')
+
             self.owner.co = self.pending
             log.debug(f'Got owner: {self.owner}')
             self.pending = None

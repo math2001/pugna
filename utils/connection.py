@@ -1,5 +1,6 @@
 import asyncio
 import json
+from constants import *
 
 enc = json.JSONEncoder().encode
 dec = json.JSONDecoder().decode
