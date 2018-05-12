@@ -127,7 +127,8 @@ class Server:
             if res['uuid'] != self.owneruuid:
                 raise NotImplementedError("Reply with 'liar!' and close")
 
-            await self.pending.write(kind='identification state change', state='accepted')
+            await self.pending.write(kind='identification state change',
+                                     state='accepted')
             self.owner.co = self.pending
             self.pending = None
             self.state = STATE_WAITING_REQUEST
