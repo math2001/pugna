@@ -16,6 +16,10 @@ STATE_GAME = "Playing!"
 STATE_CLOSING = 'Closing'
 STATE_CLOSED = 'Closed'
 
+def handle_exception(fut):
+    if fut.exception():
+        fut.result()
+
 
 class Client:
     """Used to represent a client"""
@@ -77,6 +81,10 @@ class Server:
 
         self.state = STATE_WAITING_OWNER
         self.task_gameloop = self.loop.create_task(self.gameloop())
+        # raise exception if one occurs. It doesn't do it automatically because
+        # we store the task into a variable (self.task_gameloop). Thanks for the
+        # answer to https://stackoverflow.com/a/27299160/6164984
+        self.task_gameloop.add_done_callback(handle_exception)
 
     async def shutdown(self):
         """Closes the connections and close the server"""
