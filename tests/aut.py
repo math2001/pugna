@@ -43,7 +43,14 @@ class Aut(unittest.TestCase):
 
     def decorate(self, fn):
         def wrapper(*args, **kwargs):
-            return self.loop.run_until_complete(fn(*args, **kwargs))
+            try:
+                return self.loop.run_until_complete(asyncio.wait_for(
+                    fn(*args, **kwargs), self.TIMEOUT
+                ))
+            except asyncio.TimeoutError as e:
+                pass
+            # hack to not get "during handling of exception, an other..."
+            self.fail(f'Timeout ({self.TIMEOUT}s): {fn}')
         return wrapper
 
     async def eventually(self, fn, value, x=10, wait=0.1):
