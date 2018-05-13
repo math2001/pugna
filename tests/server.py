@@ -251,9 +251,11 @@ class TestServer(Aut):
         other1 = await self.request('coolusername', 'other uuid')
         self.assertEqual(await other1.read(), {
             'kind': 'request state change',
-            'state': 'rejected',
+            'state': 'refused',
             'reason': 'username taken'
         })
+
+        self.assertEqual(self.server.state, STATE_WAITING_REQUEST)
 
         other2 = await self.request('anothercoolusername', 'other uuid')
         self.assertEqual(await owner.read(), {
@@ -265,4 +267,6 @@ class TestServer(Aut):
             'kind': 'request state change',
             'state': 'waiting for owner response'
         })
+
+        self.assertEqual(self.server.state, STATE_WAITING_REQUEST_REPLY)
 

@@ -183,6 +183,14 @@ class Server:
             if res['uuid'] == self.owneruuid:
                 raise NotImplementedError("Reply with error (can't join own "
                                           "game)")
+            # they both have the same username
+            if res['by'] == self.owner.username:
+                await self.pending.write(kind='request state change',
+                                         state='refused',
+                                         reason='username taken')
+                self.pending.close()
+                self.pending = None
+                return
             self.other.co = self.pending
             if 'by' not in res or 'uuid' not in res:
                 raise NotImplementedError(f"Need 'by' and 'uuid' in {res}")
