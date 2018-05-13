@@ -7,6 +7,18 @@ from tests.aut import *
 
 class TestServer(Aut):
 
+    async def identify(self, username, uuid):
+        """Utils function to connect a client as the owner"""
+        co = await self.newconnection()
+        await co.write(kind='identification', by=username, uuid=uuid)
+        return co
+
+    async def request(self, username, uuid):
+        """Utils function to connect a client as the other"""
+        co = await self.newconnection()
+        await co.write(kind='new request', by=username, uuid=uuid)
+        return co
+
     async def before(self):
         self.server = Server('owner', self.loop)
         await self.server.start(PORT)
@@ -103,7 +115,8 @@ class TestServer(Aut):
 
         res = await owner.read()
         self.assertEqual(res, {'kind': 'identification state change',
-                               'state': 'refused'})
+                               'state': 'refused',
+                               'reason': 'invalid uuid'})
 
         with self.assertRaises(ConnectionClosed):
             await owner.read()
@@ -226,11 +239,32 @@ class TestServer(Aut):
                                                'state': 'accepted'})
         self.assertEqual(self.server.state, STATE_HERO_SELECTION)
 
-
-    async def test_owner_join(self):
-        """Test handling of owner joining their own game (both clients have the
-        same uuid)"""
-
     # TODO: test same username
 
+    async def test_same_username(self):
+        """Test handling of 2 different clients who have the same username"""
+
+        owner = await self.identify('coolusername', 'owner')
+        self.assertEqual(await owner.read(), {
+            'kind': 'identification state change',
+            'state': 'accepted'
+        })
+
+        other1 = await self.request('coolusername', 'other uuid')
+        self.assertEqual(await other1.read(), {
+            'kind': 'request state change',
+            'state': 'rejected',
+            'reason': 'username taken'
+        })
+
+        other2 = await self.request('anothercoolusername', 'other uuid')
+        self.assertEqual(await owner.read(), {
+            'kind': 'new request',
+            'by': 'anothercoolusername'
+        })
+        await owner.write(kind='request state change')
+        self.assertEqual(await other2.read(), {
+            'kind': 'request state change',
+            'state': 'waiting for owner response'
+        })
 

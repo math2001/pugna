@@ -151,7 +151,8 @@ class Server:
 
             if res['uuid'] != self.owneruuid:
                 await self.pending.write(kind='identification state change',
-                                         state='refused')
+                                         state='refused',
+                                         reason='invalid uuid')
                 self.pending.close()
                 self.pending = None
                 return
