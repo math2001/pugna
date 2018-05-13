@@ -53,7 +53,7 @@ class Aut(unittest.TestCase):
             self.fail(f'Timeout ({self.TIMEOUT}s): {fn}')
         return wrapper
 
-    async def eventually(self, fn, value, x=10, wait=0.05):
+    async def eventually(self, fn, value, x=10, wait=0.01):
         """Tests x times if the attribute is equal to value, awaiting a certain
         amount of time.
         """

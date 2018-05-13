@@ -45,7 +45,7 @@ class Client:
 class Server:
 
     def setstate(self, newvalue):
-        log.info(f'Server{{{newvalue}}}')
+        log.debug(f'Server{{{newvalue}}}')
         self._state = newvalue
 
     state = property(lambda self: self._state, setstate)
@@ -129,9 +129,9 @@ class Server:
         if self.owner.co and self.other.co and self.pending:
             log.debug(f"Reject pending connection {self.pending} (enough "
                       "clients)")
-            self.pending.write(kind='request state change',
-                               state='rejected by server')
-            await self.pending.close()
+            await self.pending.write(kind='request state change',
+                                     state='refused by server')
+            self.pending.close()
             self.pending = None
             return
 

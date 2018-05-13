@@ -123,7 +123,46 @@ class TestServer(Aut):
     async def test_more_client(self):
         """Send an other request when there is already a owner and an other"""
 
+        self.assertEqual(self.server.state, STATE_WAITING_OWNER)
 
-    async def test_refused_requests(self):
-        """Test handling of requests refused by the owner"""
+        owner = await self.newconnection()
+        await owner.write(kind='identification', uuid='owner',
+                          username='owner username')
+
+        self.assertEqual(await owner.read(),
+                         {'kind': 'identification state change',
+                          'state': 'accepted'})
+        self.assertEqual(self.server.state, STATE_WAITING_REQUEST)
+
+        # send request
+        other1 = await self.newconnection()
+        await other1.write(kind='new request', uuid='other1',
+                           username='other1')
+
+        self.assertEqual(await owner.read(), {'kind': 'new request',
+                                              'by': 'other1'})
+        # accept
+        await owner.write(kind='request state change', state='accepted')
+
+        res = await owner.read()
+        self.assertEqual(res['kind'], 'select hero')
+
+        self.assertEqual(self.server.state, STATE_HERO_SELECTION)
+
+        # send in an other request
+        other2 = await self.newconnection()
+        await other2.write(kind='new request', uuid='other2', username='other2')
+        # check the response
+        res = await other2.read()
+        self.assertEqual(res, {'kind': 'request state change',
+                               'state': 'refused by server'})
+
+        self.assertEqual(self.server.state, STATE_HERO_SELECTION)
+
+    async def test_owner_join(self):
+        """Test handling of owner joining their own game"""
+
+    async def test_request_rejection(self):
+        """Test handling of multiple request rejection by the owner"""
+
 
