@@ -1,14 +1,21 @@
 import asyncio
 import unittest
 import logging
+import time
 
 __all__ = ["Aut"]
 
 log = logging.getLogger(__name__)
 
+_times = {
+    'setup': [],
+    'teardown': [],
+    'tests': {}
+}
+
 class Aut(unittest.TestCase):
 
-    """Asynchrone Unit Test.
+    """Asynchronous Unit Test.
 
     Quick and dirty, but works pretty well.
     Based on https://stackoverflow.com/a/37888085/6164984
@@ -23,7 +30,12 @@ class Aut(unittest.TestCase):
         self._func_cache = {}
         super().__init__(*args, **kwargs)
 
+    @staticmethod
+    def get_times():
+        return _times
+
     def setUp(self):
+        self._start_time = time.time()
         self.loop = asyncio.new_event_loop()
         asyncio.set_event_loop(self.loop)
         if hasattr(self, 'before'):
@@ -31,8 +43,12 @@ class Aut(unittest.TestCase):
                 self.loop.run_until_complete(asyncio.coroutine(self.before)())
             else:
                 self.loop.run_until_complete(self.before())
+        _times['setup'].append(time.time() - self._start_time)
+        self._start_time = time.time()
 
     def tearDown(self):
+        _times['tests'][self.id()] = time.time() - self._start_time
+        self._start_time = time.time()
         if hasattr(self, 'after'):
             if not asyncio.iscoroutinefunction(self.after):
                 self.loop.run_until_complete(asyncio.coroutine(self.after)())
@@ -40,6 +56,7 @@ class Aut(unittest.TestCase):
                 self.loop.run_until_complete(self.after())
         self.loop.stop()
         self.loop.close()
+        _times['teardown'].append(time.time() - self._start_time)
 
     def decorate(self, fn):
         def wrapper(*args, **kwargs):
@@ -73,34 +90,3 @@ class Aut(unittest.TestCase):
                 return self._func_cache[name]
         return attr
 
-async def hello():
-    return 'hello'
-
-async def bonjour():
-    return 'bonjour'
-
-# import asynctest
-
-# class Aut(asynctest.TestCase):
-#     pass
-
-# Aut.before = Aut.setUp
-# Aut.after = Aut.tearDown
-
-class TestSomething(Aut):
-
-    async def before(self):
-        self.computed = await hello()
-
-    async def after(self):
-        del self.computed
-
-    async def test_hello(self):
-        self.assertEqual(await hello(), 'hello')
-        self.assertEqual(self.computed, 'hello')
-
-    async def test_bonjour(self):
-        self.assertEqual(await bonjour(), 'bonjour')
-
-if __name__ == "__main__":
-    unittest.main()
