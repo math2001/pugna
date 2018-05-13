@@ -39,7 +39,7 @@ class TestServer(Aut):
         ownerco = await self.newconnection()
         # log into the server
         await ownerco.write(kind='identification', uuid='owner',
-                                username='owner username')
+                                by='owner username')
 
         res = await ownerco.read()
         self.assertEqual(res, {'kind': 'identification state change',
@@ -51,7 +51,7 @@ class TestServer(Aut):
         # We create a new player and ask the owner to join
         otherco = await self.newconnection()
         await otherco.write(kind='new request', uuid='other',
-                                username='other username')
+                            by='other username')
 
         # check if the owner recieved the request, and if the other recieved the
         # confirmation (that his request had been sent)
@@ -99,7 +99,7 @@ class TestServer(Aut):
 
         owner = await self.newconnection()
         await owner.write(kind='identification', uuid='WRONG owner',
-                          username='owner username')
+                          by='owner username')
 
         res = await owner.read()
         self.assertEqual(res, {'kind': 'identification state change',
@@ -113,7 +113,7 @@ class TestServer(Aut):
         owner = await self.newconnection()
         # this time, we login with the right username
         await owner.write(kind='identification', uuid='owner',
-                          username='owner username')
+                          by='owner username')
 
         res = await owner.read()
         self.assertEqual(res, {'kind': 'identification state change',
@@ -127,7 +127,7 @@ class TestServer(Aut):
 
         owner = await self.newconnection()
         await owner.write(kind='identification', uuid='owner',
-                          username='owner username')
+                          by='owner username')
 
         self.assertEqual(await owner.read(),
                          {'kind': 'identification state change',
@@ -137,7 +137,7 @@ class TestServer(Aut):
         # send request
         other1 = await self.newconnection()
         await other1.write(kind='new request', uuid='other1',
-                           username='other1')
+                           by='other1')
 
         self.assertEqual(await owner.read(), {'kind': 'new request',
                                               'by': 'other1'})
@@ -151,7 +151,7 @@ class TestServer(Aut):
 
         # send in an other request
         other2 = await self.newconnection()
-        await other2.write(kind='new request', uuid='other2', username='other2')
+        await other2.write(kind='new request', uuid='other2', by='other2')
         # check the response
         res = await other2.read()
         self.assertEqual(res, {'kind': 'request state change',
@@ -159,10 +159,78 @@ class TestServer(Aut):
 
         self.assertEqual(self.server.state, STATE_HERO_SELECTION)
 
-    async def test_owner_join(self):
-        """Test handling of owner joining their own game"""
-
     async def test_request_rejection(self):
         """Test handling of multiple request rejection by the owner"""
+
+        self.assertEqual(self.server.state, STATE_WAITING_OWNER)
+
+        owner = await self.newconnection()
+        await owner.write(kind='identification', uuid='owner',
+                          by='owner username')
+
+        self.assertEqual(await owner.read(),
+                         {'kind': 'identification state change',
+                          'state': 'accepted'})
+        self.assertEqual(self.server.state, STATE_WAITING_REQUEST)
+
+        # first client who wants to join (refused)
+        other1 = await self.newconnection()
+        await other1.write(kind='new request', by='other 1', uuid='other1')
+        self.assertEqual(await other1.read(), {
+            'kind': 'request state change',
+            'state': 'waiting for owner response'})
+
+        self.assertEqual(await owner.read(), {'kind': 'new request',
+                                              'by': 'other 1'})
+
+        self.assertEqual(self.server.state, STATE_WAITING_REQUEST_REPLY)
+
+        await owner.write(kind='request state change', state='refused')
+
+        self.assertEqual(await other1.read(), {'kind': 'request state change',
+                                               'state': 'refused'})
+        with self.assertRaises(ConnectionClosed):
+            await other1.read()
+
+        # second client who wants to join (refused)
+        other2 = await self.newconnection()
+        await other2.write(kind='new request', by='other 2', uuid='other2')
+        self.assertEqual(await other2.read(),
+                         {'kind': 'request state change',
+                          'state': 'waiting for owner response'})
+        self.assertEqual(await owner.read(), {'kind': 'new request',
+                                              'by': 'other 2'})
+        self.assertEqual(self.server.state, STATE_WAITING_REQUEST_REPLY)
+        await owner.write(kind='request state change', state='refused')
+
+        self.assertEqual(await other2.read(), {'kind': 'request state change',
+                                               'state': 'refused'})
+        with self.assertRaises(ConnectionClosed):
+            await other2.read()
+
+        # third client who wants to join (accepted)
+        other3 = await self.newconnection()
+        await other3.write(kind='new request', by='other 3', uuid='other3')
+        self.assertEqual(await other3.read(), {
+            'kind': 'request state change',
+            'state': 'waiting for owner response'})
+
+        self.assertEqual(await owner.read(), {'kind': 'new request',
+                                              'by': 'other 3'})
+
+        self.assertEqual(self.server.state, STATE_WAITING_REQUEST_REPLY)
+
+        await owner.write(kind='request state change', state='accepted')
+
+        self.assertEqual(await other3.read(), {'kind': 'request state change',
+                                               'state': 'accepted'})
+        self.assertEqual(self.server.state, STATE_HERO_SELECTION)
+
+
+    async def test_owner_join(self):
+        """Test handling of owner joining their own game (both clients have the
+        same uuid)"""
+
+    # TODO: test same username
 
 

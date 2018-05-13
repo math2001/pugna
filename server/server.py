@@ -171,12 +171,14 @@ class Server:
             if res['uuid'] == self.owneruuid:
                 raise NotImplementedError("Reply with error (can't join own "
                                           "game)")
+            if 'by' not in res:
+                raise NotImplementedError(f"Error: need 'by' key in {res}")
             self.other.co = self.pending
             self.pending = None
             log.debug(f'Got other: {self.other}')
             # send request to owner, and confirmation to the other
             await asyncio.gather(
-                self.owner.co.write(kind='new request', by=res['username']),
+                self.owner.co.write(kind='new request', by=res['by']),
                 self.other.co.write(kind='request state change',
                                     state='waiting for owner response'))
             self.state = STATE_WAITING_REQUEST_REPLY
@@ -199,10 +201,9 @@ class Server:
 
         elif res['state'] == 'refused':
             # send refused and close
-            # TODO: test this part
             await self.other.co.write(kind='request state change',
                                    state='refused')
-            await self.other.co.close()
+            self.other.co.close()
             self.other.co = None
             self.state = STATE_WAITING_REQUEST
         else:
