@@ -239,8 +239,6 @@ class TestServer(Aut):
                                                'state': 'accepted'})
         self.assertEqual(self.server.state, STATE_HERO_SELECTION)
 
-    # TODO: test same username
-
     async def test_same_username(self):
         """Test handling of 2 different clients who have the same username"""
 

@@ -30,11 +30,15 @@ def new_hero(name):
 class Client:
     """Used to represent a client"""
     def __init__(self, name):
+        # the name is just used for debugging
         self.name = name
         # the connection
         self.co = None
         # the status
         self.st = None
+
+        self.username = None
+        self.uuid = None
 
     def __str__(self):
         return f"<Client {self.name!r} co={self.co} st={self.st}>"
@@ -161,27 +165,38 @@ class Server:
                                      state='accepted')
 
             self.owner.co = self.pending
+            if 'by' not in res or 'uuid' not in res:
+                raise NotImplementedError(f"need 'by' and 'uuid' in {res}")
+
+            self.owner.username = res['by']
+            self.owner.uuid = res['uuid']
+
             log.debug(f'Got owner: {self.owner}')
             self.pending = None
             self.state = STATE_WAITING_REQUEST
 
         elif self.state == STATE_WAITING_REQUEST:
+
             if res['kind'] != 'new request':
                 raise NotImplementedError("Reply with error (expecting "
                                           "request) and close")
             if res['uuid'] == self.owneruuid:
                 raise NotImplementedError("Reply with error (can't join own "
                                           "game)")
-            if 'by' not in res:
-                raise NotImplementedError(f"Error: need 'by' key in {res}")
             self.other.co = self.pending
+            if 'by' not in res or 'uuid' not in res:
+                raise NotImplementedError(f"Need 'by' and 'uuid' in {res}")
+            self.other.username = res['by']
+            self.other.uuid = res['uuid']
             self.pending = None
             log.debug(f'Got other: {self.other}')
             # send request to owner, and confirmation to the other
             await asyncio.gather(
-                self.owner.co.write(kind='new request', by=res['by']),
+                self.owner.co.write(kind='new request', by=self.other.username),
                 self.other.co.write(kind='request state change',
                                     state='waiting for owner response'))
+            # note that this doesn't mean that the other player is accepted
+            # the owner will decide that
             self.state = STATE_WAITING_REQUEST_REPLY
 
     async def handle_requests(self):
@@ -203,7 +218,7 @@ class Server:
         elif res['state'] == 'refused':
             # send refused and close
             await self.other.co.write(kind='request state change',
-                                   state='refused')
+                                      state='refused')
             self.other.co.close()
             self.other.co = None
             self.state = STATE_WAITING_REQUEST
