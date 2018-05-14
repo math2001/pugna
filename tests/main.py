@@ -4,7 +4,7 @@ import os
 import logging
 
 logging.basicConfig(level=logging.INFO,
-                    filename='tests.log',
+                    filename='logs/tests.log',
                     filemode='w',
                     format='{levelname:<8} {name:<15} {message}',
                     style='{')
@@ -38,7 +38,7 @@ if __name__ == '__main__':
 
     setup = round(average(*times['setup']), 2)
     teardown = round(average(*times['teardown']), 2)
-    print(f" TEST TIMES ({setup}, {teardown}) ".center(70, '='))
+    print(f" SLOW TEST TIMES ({setup}, {teardown}) ".center(70, '='))
     print()
 
     for name, time in times['tests'].items():
@@ -48,5 +48,5 @@ if __name__ == '__main__':
     # display the logs
     print()
     print(' LOGS '.center(70, '='), '\n', flush=True)
-    with open('tests.log', 'r') as fp:
+    with open('logs/tests.log', 'r') as fp:
         print(fp.read())
