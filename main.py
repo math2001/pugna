@@ -1,3 +1,5 @@
+DEBUG = True
+
 import pygame
 import pygame.freetype
 import asyncio
@@ -7,11 +9,19 @@ import scenes
 
 from constants import *
 
+os.environ['SDL_VIDEO_CENTERED'] = '1'
+
 logging.basicConfig(level=logging.INFO,
                     filename='logs/app.log',
                     filemode='w',
                     format='{levelname:<8} {name:<15} {message}',
                     style='{')
+
+log = logging.getLogger(__name__)
+
+if DEBUG:
+    # log to the stderr as well
+    logging.getLogger().addHandler(logging.StreamHandler())
 
 # only use absoute imports. The dirname of the current script is always added
 # to sys.path, which I don't want. I just want the root directory of the
@@ -20,6 +30,10 @@ for i, path in enumerate(sys.path):
     if path == os.path.dirname(os.path.abspath(__file__)):
         sys.path[i] = os.getcwd()
 
+
+def handle_task(fut):
+    if fut.exception():
+        fut.result() # raise exception
 
 def setstate(self, state):
     log.debug(f"{self.__class__.__name__}{{{state}}}")
@@ -58,6 +72,7 @@ class SceneManager:
     async def focus(self, scenename):
         if not hasattr(scenes, scenename):
             raise ValueError(f"No such scene as {scenename!r}")
+
         scene = getattr(scenes, scenename)(self)
 
         if hasattr(self.scene, 'on_blur'):
@@ -67,6 +82,12 @@ class SceneManager:
 
         if hasattr(self.scene, 'on_focus'):
             await scene.on_focus()
+
+    def schedule(self, coro):
+        """A simple wrapper do simplify a scene's code"""
+        task = self.loop.create_task(coro)
+        task.add_done_callback(handle_task)
+        return task
 
     async def gameloop(self):
         clock = pygame.time.Clock()
@@ -100,4 +121,3 @@ class SceneManager:
 
 SceneManager().run("SplashScreen")
 pygame.quit()
-print("See ya!")

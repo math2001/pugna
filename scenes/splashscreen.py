@@ -1,4 +1,5 @@
 import pygame.color
+import pygame
 
 class SplashScreen:
 
@@ -36,7 +37,6 @@ class SplashScreen:
                                        size=self.SUBTITLE_SIZE,
                                        fgcolor=pygame.Color(150, 150, 150, 255))
 
-
     async def update(self):
         title = 10
         color = 255 // 2
@@ -50,6 +50,6 @@ class SplashScreen:
         if self.m.frames_count == title + color:
             self.state = 2
 
-
-
-
+    async def on_event(self, e):
+        if e.type in (pygame.KEYDOWN, pygame.MOUSEBUTTONDOWN):
+            self.m.schedule(self.m.focus('Menu'))
