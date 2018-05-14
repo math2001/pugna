@@ -55,6 +55,8 @@ class SceneManager:
 
         self.frames_count = 0
 
+        pygame.display.set_caption(CAPTION)
+
         # load fonts
         self.uifont = pygame.freetype.Font('media/fonts/poorstory.ttf')
         self.fancyfont = pygame.freetype.Font('media/fonts/sigmar.ttf')
