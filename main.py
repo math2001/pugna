@@ -1,3 +1,4 @@
+VERSION = '0.1.0'
 DEBUG = True
 
 import pygame
@@ -122,6 +123,9 @@ class SceneManager:
                 await self.scene.on_event(e)
 
             await self.scene.update()
+
+            self.screen.fill(pygame.Color('black'))
+
             await self.scene.render()
 
             self.gui.render()
@@ -133,6 +137,9 @@ class SceneManager:
             pygame.display.flip()
 
             clock.tick(30)
+            if DEBUG:
+                pygame.display.set_caption(f"{CAPTION} v{VERSION} | "
+                                           f"{round(clock.get_fps())}")
 
     def run(self, scenename):
         self.loop.run_until_complete(self.focus(scenename))
@@ -140,5 +147,4 @@ class SceneManager:
 
     state = property(getstate, setstate)
 
-SceneManager().run("Menu")
-pygame.quit()
+SceneManager().run("SplashScreen")

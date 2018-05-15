@@ -19,7 +19,6 @@ class SplashScreen:
         self.state = 0
 
     async def render(self):
-        self.m.screen.fill(0)
         if self.state >= 1:
             tr = self.m.fancyfont.get_rect(self.TITLE, size=self.TITLE_SIZE)
             tr.center = self.m.rect.center
@@ -39,7 +38,7 @@ class SplashScreen:
 
     async def update(self):
         title = 10
-        color = 255 // 2
+        color = 200 // 2
 
         if self.m.frames_count == title:
             self.state = 1
