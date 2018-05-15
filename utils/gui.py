@@ -5,6 +5,7 @@ from pygame.locals import *
 import pygame.freetype
 from contextlib import contextmanager
 from collections import deque
+import copy
 
 pygame.freetype.init()
 
@@ -27,13 +28,25 @@ class Options(dict):
         try:
             return self[attr]
         except KeyError:
-            raise AttributeError("No attribute %s" % attr)
+            pass
+        raise AttributeError(f"No attribute {attr!r}")
 
     def __setattr__(self, attr, value):
+        if self.ONSETATTR:
+            self.ONSETATTR(attr, value)
         self[attr] = value
 
-    def copy(self):
-        return Options(self.items())
+_rect_attrs = ('x', 'y', 'top', 'left', 'bottom', 'right', 'topleft',
+               'bottomleft', 'topright', 'bottomright', 'midtop', 'midleft',
+               'midbottom', 'midright', 'center', 'centerx', 'centery')
+
+def optstobounds(opts):
+    for key in _rect_attrs:
+        try:
+            opts.bounds[key] = opts[key]
+            opts.pop(key)
+        except KeyError:
+            pass
 
 class Button:
 
@@ -46,24 +59,36 @@ class Button:
         bordercolor=Color(30, 30, 30),
         borderwidth=1,
         size=None,
-        fontname=None,
+        font=None, # a string
         paddingx=20,
         paddingy=30,
         onclick=None,
-        onhover=None,
+        onmouseleave=None,
+        onmouseenter=None,
+        # when the size of the button will change, these arguments
+        # will be given to get_rect
+        bounds={}
     )
 
     def __init__(self, fonts, screen, text, **useropts):
-        self.opt = self.OPT.copy()
+        self.opt = copy.deepcopy(self.OPT)
+
         self.opt.update(useropts)
+        try:
+            useropts.bounds
+        except AttributeError:
+            optstobounds(self.opt)
+
         self.text = text
         self.screen = screen
         self.fonts = fonts
 
+        self.hovered = False
+
         self.updateimg()
 
     def updateimg(self):
-        with fontopt(self.fonts[self.opt.fontname], size=self.opt.size,
+        with fontopt(self.fonts[self.opt.font], size=self.opt.size,
                      fgcolor=self.opt.fg) as font:
             self._updateimg(font)
 
@@ -93,22 +118,34 @@ class Button:
         r.center = self.rect.center
         font.render_to(self.image, r, None)
 
+        for attr in self.opt.bounds:
+            setattr(self.rect, attr, self.opt.bounds[attr])
+
+    def setopt(self, **kwargs):
+        self.opt.update(kwargs)
+        self.updateimg()
+
     async def feed(self, e):
-        e.captured = True
         if self.opt.onclick and e.type == MOUSEBUTTONDOWN \
-            and self.rect.collidepoint(e.pos):
+            and self.rect.collidepoint(e.pos) and not e.captured:
+            e.captured = True
             await self.opt.onclick(self, e)
-        elif self.opt.onhover and e.type == MOUSEMOTION \
-            and self.rect.collidepoint(e.pos):
-            await self.opt.onhover(self, e)
-        else:
-            e.captured = False
+        elif e.type == MOUSEMOTION:
+            if not e.captured and self.rect.collidepoint(e.pos):
+                e.captured = True
+                if not self.hovered and self.opt.onmouseenter:
+                    await self.opt.onmouseenter(self, e)
+                self.hovered = True
+            else:
+                if self.hovered and self.opt.onmouseleave:
+                    await self.opt.onmouseleave(self, e)
+                self.hovered = False
 
     def render(self):
         self.screen.blit(self.image, self.rect)
 
     def __str__(self):
-        return f"<Button text={self.text} @ {self.rect}>"
+        return f"<Button text={self.text!r} @ {self.rect}>"
 
     def __repr__(self):
         return str(self)
@@ -127,8 +164,6 @@ class GUI:
     async def feed(self, e):
         e.captured = False
         for el in reversed(self.elements):
-            if e.captured:
-                return
             await el.feed(e)
 
     def render(self):
