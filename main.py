@@ -6,11 +6,11 @@ import asyncio
 import logging
 import sys, os
 import scenes
+import utils.gui
 
 from constants import *
 
 os.environ['SDL_VIDEO_CENTERED'] = '1'
-
 logging.basicConfig(level=logging.INFO,
                     filename='logs/app.log',
                     filemode='w',
@@ -39,6 +39,9 @@ def setstate(self, state):
     log.debug(f"{self.__class__.__name__}{{{state}}}")
     self._state = state
 
+async def void(*args, **kwargs):
+    pass
+
 getstate = lambda self: self._state
 
 pygame.display.init()
@@ -62,6 +65,13 @@ class SceneManager:
         self.fancyfont = pygame.freetype.Font('media/fonts/sigmar.ttf')
         self.resetfonts()
 
+        self.gui = utils.gui.GUI(
+            self.loop,
+            self.screen,
+            ui=self.uifont,
+            fancy=self.fancyfont
+        )
+
     def resetfonts(self):
         self.uifont.fgcolor = TEXT_FG
         self.uifont.size = 20
@@ -82,6 +92,13 @@ class SceneManager:
 
         self.scene = scene
 
+        if not hasattr(self.scene, 'on_event'):
+            self.scene.on_event = void
+        if not hasattr(self.scene, 'update'):
+            self.scene.update = void
+        if not hasattr(self.scene, 'render'):
+            self.scene.render = void
+
         if hasattr(self.scene, 'on_focus'):
             await scene.on_focus()
 
@@ -96,16 +113,18 @@ class SceneManager:
 
         while True:
             for e in pygame.event.get():
+                await self.gui.feed(e)
                 if e.type == pygame.QUIT:
                     if hasattr(self.scene, 'on_blur'):
                         await self.scene.on_blur(scene)
                     return
 
-                if hasattr(self.scene, 'on_event'):
-                    await self.scene.on_event(e)
+                await self.scene.on_event(e)
 
             await self.scene.update()
             await self.scene.render()
+
+            self.gui.render()
 
             self.frames_count += 1
 
@@ -121,5 +140,5 @@ class SceneManager:
 
     state = property(getstate, setstate)
 
-SceneManager().run("SplashScreen")
+SceneManager().run("Menu")
 pygame.quit()
