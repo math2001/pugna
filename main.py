@@ -8,11 +8,12 @@ import logging
 import sys, os
 import scenes
 import utils.gui
+import uuid
 
 from constants import *
 
 os.environ['SDL_VIDEO_CENTERED'] = '1'
-logging.basicConfig(level=logging.INFO,
+logging.basicConfig(level=logging.DEBUG,
                     filename='logs/app.log',
                     filemode='w',
                     format='{levelname:<8} {name:<15} {message}',
@@ -37,7 +38,7 @@ def handle_task(fut):
         fut.result() # raise exception
 
 def setstate(self, state):
-    log.debug(f"{self.__class__.__name__}{{{state}}}")
+    log.info(f"{self.__class__.__name__}{{{state}}}")
     self._state = state
 
 async def void(*args, **kwargs):
@@ -73,6 +74,8 @@ class SceneManager:
             fancy=self.fancyfont
         )
 
+        self.uuid = uuid.uuid4().hex
+
     def resetfonts(self):
         self.uifont.fgcolor = TEXT_FG
         self.uifont.size = 20
@@ -85,6 +88,8 @@ class SceneManager:
     async def focus(self, scenename):
         if not hasattr(scenes, scenename):
             raise ValueError(f"No such scene as {scenename!r}")
+
+        log.info(f"-> {scenename}")
 
         scene = getattr(scenes, scenename)(self)
 
@@ -117,7 +122,7 @@ class SceneManager:
                 await self.gui.feed(e)
                 if e.type == pygame.QUIT:
                     if hasattr(self.scene, 'on_blur'):
-                        await self.scene.on_blur(scene)
+                        await self.scene.on_blur(self.scene)
                     return
 
                 await self.scene.on_event(e)
@@ -147,4 +152,4 @@ class SceneManager:
 
     state = property(getstate, setstate)
 
-SceneManager().run("SplashScreen")
+SceneManager().run("Menu")

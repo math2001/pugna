@@ -72,8 +72,8 @@ class Button:
 
     def __init__(self, fonts, screen, text, **useropts):
         self.opt = copy.deepcopy(self.OPT)
-
         self.opt.update(useropts)
+
         try:
             useropts.bounds
         except AttributeError:
@@ -145,7 +145,8 @@ class Button:
         self.screen.blit(self.image, self.rect)
 
     def __str__(self):
-        return f"<Button text={self.text!r} @ {self.rect}>"
+        active = 'on' if self.active else 'off'
+        return f"<Button {active} text={self.text!r} @ {self.rect}>"
 
     def __repr__(self):
         return str(self)
@@ -170,7 +171,11 @@ class GUI:
         for el in self.elements:
             el.render()
 
+    def activate(self, el):
+        self.elements.append(el)
+
+    def deactivate(self, el):
+        self.elements.remove(el)
+
     def Button(self, *args, **kwargs):
-        btn = Button(self.fonts, self.screen, *args, **kwargs)
-        self.elements.append(btn)
-        return btn
+        return Button(self.fonts, self.screen, *args, **kwargs)
