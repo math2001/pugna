@@ -18,11 +18,6 @@ class HostGame:
 
     def __init__(self, m):
         self.m = m
-        self.server = Server(self.m.uuid, self.m.loop)
-
-        self.m.state = STATE_CREATING
-
-        self.m.client = Client('localhost', PORT)
 
         self.requestbox = self.m.gui.ConfirmBox(
             title="Someone wants to fight ya...", msg="Msg",
@@ -34,6 +29,19 @@ class HostGame:
             onsend=self.messageok
         )
 
+    async def on_focus(self):
+        self.server = Server(self.m.uuid, self.m.loop)
+
+        self.m.state = STATE_CREATING
+
+        self.m.client = await Client.new('localhost', PORT)
+
+        self.m.state = STATE_STARTING
+        await self.server.start(PORT)
+
+        self.m.state = STATE_LOGGING
+        self.task = self.m.schedule(self.client.login(self.m.uuid))
+
     async def requestsend(self, oked):
         if oked:
             self.task = self.m.client.accept_request()
@@ -42,12 +50,6 @@ class HostGame:
             self.state = STATE_WAITING_PLAYER
             self.task = self.m.client.refuse_request()
 
-    async def on_focus(self):
-        self.m.state = STATE_STARTING
-        await self.server.start(PORT)
-
-        self.m.state = STATE_LOGGING
-        self.task = self.m.schedule(client.login(self.m.uuid))
 
     def _task_exception(self, fut):
         exception = fut.exception()
