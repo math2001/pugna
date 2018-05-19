@@ -201,7 +201,8 @@ class TestServer(Aut):
         await owner.write(kind='request state change', state='refused')
 
         self.assertEqual(await other1.read(), {'kind': 'request state change',
-                                               'state': 'refused'})
+                                               'state': 'refused',
+                                               'reason': 'owner refused'})
         with self.assertRaises(ConnectionClosed):
             await other1.read()
 
@@ -217,7 +218,8 @@ class TestServer(Aut):
         await owner.write(kind='request state change', state='refused')
 
         self.assertEqual(await other2.read(), {'kind': 'request state change',
-                                               'state': 'refused'})
+                                               'state': 'refused',
+                                               'reason': 'owner refused'})
         with self.assertRaises(ConnectionClosed):
             await other2.read()
 

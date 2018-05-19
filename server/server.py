@@ -5,6 +5,7 @@ import logging
 from utils.connection import *
 
 log = logging.getLogger(__name__)
+log.setLevel(logging.WARNING)
 
 STATE_INIT = 'Initializing'
 STATE_STARTING = 'Starting server'
@@ -226,7 +227,8 @@ class Server:
         elif res['state'] == 'refused':
             # send refused and close
             await self.other.co.write(kind='request state change',
-                                      state='refused')
+                                      state='refused',
+                                      reason='owner refused')
             self.other.co.close()
             self.other.co = None
             self.state = STATE_WAITING_REQUEST

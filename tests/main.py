@@ -21,8 +21,8 @@ for i, path in enumerate(sys.path):
         sys.path[i] = os.getcwd()
 
 from tests.aut import Aut
-# from tests.connection import TestConnection
-# from tests.server import TestServer
+from tests.connection import TestConnection
+from tests.server import TestServer
 from tests.client import TestClient
 
 SLOW_TEST_THRESHOLD = 0.3
@@ -59,6 +59,8 @@ if __name__ == '__main__':
     displayslowtests()
 
     # display the logs
+    if input('Display logs? ') != '':
+        exit(0)
     print()
     print(' LOGS '.center(70, '='), '\n', flush=True)
     with open('logs/tests/app.log', 'r') as fp:
