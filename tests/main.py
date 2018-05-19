@@ -49,8 +49,7 @@ def displayslowtests():
 if __name__ == '__main__':
 
     try:
-        unittest.main(exit=False)
-        pass
+        unittest.main(exit=False, warnings='ignore')
     except KeyboardInterrupt as e:
         pass
 
