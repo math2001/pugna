@@ -107,6 +107,10 @@ class GuiElement:
     def debug(self, color, rect, surf=None):
         pygame.draw.rect(surf or self.gui.screen, Color(color), rect, 1)
 
+
+    def copy(self):
+        return getattr(self.gui, self.__class__.__name__)(**self.opt)
+
 class Button(GuiElement):
 
     """Text in a button isn't wrapped"""
@@ -218,7 +222,10 @@ class MessageBox(GuiElement):
             raise ValueError("Button shouldn't have onclick event defined, "
                              f"got {self.opt.ok.opt.onclick}")
 
-        # self.opt.ok.opt.onclick = self.opt.onsend
+        self.opt.ok.opt.onclick = self.onsend
+
+    async def onsend(self, btn, e):
+        await self.opt.onsend()
 
     async def feed(self, e):
         await self.opt.ok.feed(e)
@@ -258,7 +265,6 @@ class MessageBox(GuiElement):
     def render(self):
         self.gui.screen.blit(self.image, self.rect)
         self.opt.ok.render()
-
 
 class ConfirmBox(MessageBox):
     pass

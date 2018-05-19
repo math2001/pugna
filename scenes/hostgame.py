@@ -23,29 +23,26 @@ class HostGame:
 
         self.requestbox = self.m.gui.ConfirmBox(
             title="Someone wants to fight ya...", msg="Msg",
-            ok=okbtn, cancel="Na...", font='ui',
+            ok=okbtn.copy(), cancel="Na...", font='ui',
             onsend=self.requestsend)
 
         self.messagebox = self.m.gui.MessageBox(
-            title="Error", msg='Some message', ok=okbtn, font='ui',
+            title="Error", msg='Some message', ok=okbtn.copy(), font='ui',
             onsend=self.onmessageok, center=self.m.rect.center
         )
 
     async def on_focus(self):
-        self.messagebox.setopt(msg="Hello world, this is mathieu paturel!\nyep!")
-        self.m.gui.activate(self.messagebox)
-        return
-        self.server = Server(self.m.uuid, self.m.loop)
-
         self.m.state = STATE_CREATING
-
-        self.m.client = await Client.new('localhost', PORT)
+        self.server = Server(self.m.uuid, self.m.loop)
 
         self.m.state = STATE_STARTING
         await self.server.start(PORT)
 
+        self.m.client = await Client.new('localhost', PORT)
+
         self.m.state = STATE_LOGGING
-        self.task = self.m.schedule(self.client.login(self.m.uuid))
+        self.task = self.m.schedule(self.m.client.login(self.m.username,
+                                                        elf.m.uuid))
 
     async def requestsend(self, oked):
         if oked:
@@ -54,7 +51,6 @@ class HostGame:
         else:
             self.state = STATE_WAITING_PLAYER
             self.task = self.m.client.refuse_request()
-
 
     def _task_exception(self, fut):
         exception = fut.exception()
@@ -73,7 +69,6 @@ class HostGame:
         raise NotImplementedError("Do something depending on the state")
 
     async def update(self):
-        return
         if self.task.done():
 
             res = self.task.result()
