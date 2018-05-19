@@ -29,9 +29,9 @@ class HostGame:
             ok="Let's get fighting", cancel="Na...", font='ui',
             onsend=self.requestsend)
 
-        self.errorbox = self.m.gui.MessageBox(
+        self.messagebox = self.m.gui.MessageBox(
             title="Error", msg='Some message', ok='Hum... Ok', font='ui',
-            onsend=self.errorok
+            onsend=self.messageok
         )
 
     async def requestsend(self, oked):
@@ -53,8 +53,7 @@ class HostGame:
         exception = fut.exception()
         if not exception:
             return
-        self.errorbox.setopt(title="Error")
-
+        self.messagebox.setopt(title="Error")
 
     def schedule(self, coro):
         """A wrapper to handle exception raised by coroutines"""
@@ -62,7 +61,7 @@ class HostGame:
         task.add_done_callback(self._task_exception)
         return task
 
-    async def onerrorok(self):
+    async def onmessageok(self):
         """Called when the error popup ok btn has been clicked"""
         raise NotImplementedError("Do something depending on the state")
 
@@ -72,10 +71,17 @@ class HostGame:
             res = self.task.result()
             if res.error is True:
                 log.error(f"Got error: {res.msg!r}")
-                self.m.gui.activate(self.errorbox)
+                self.messagebox.setopt(msg=res.msg)
+                self.m.gui.activate(self.messagebox)
                 return
 
             if self.m.state == STATE_LOGGING:
+                if res.accepted is False:
+                    log.critical(f"Could not login to the server: {res!r}")
+                    self.m.errorbox.setopt(msg=res.msg)
+                    self.m.gui.activate(self.errorbox)
+                    return
+
                 self.m.state = STATE_WAITING_PLAYER
                 self.task = self.m.schedule(self.m.client.findplayer())
 

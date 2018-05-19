@@ -9,7 +9,7 @@ class Menu:
 
         self.btns = []
         for txt in ['host game', 'join game', 'about']:
-            btn = self.m.gui.Button(txt, onclick=self.btnclick,
+            btn = self.m.gui.Button(text=txt, onclick=self.btnclick,
                                     onmouseenter=self.btnmouseenter,
                                     onmouseleave=self.btnmouseleave,
                                     font='fancy', paddingy=60, width=300,
@@ -19,7 +19,7 @@ class Menu:
             self.btns.append(btn)
 
     async def btnclick(self, btn, e):
-        await self.m.focus(btn.text.title().replace(' ', ''))
+        await self.m.focus(btn.opt.text.title().replace(' ', ''))
 
     async def btnmouseenter(self, btn, e):
         btn.setopt(bordercolor=pygame.Color("Tomato"))

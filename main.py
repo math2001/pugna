@@ -19,6 +19,8 @@ logging.basicConfig(level=logging.DEBUG,
                     format='{levelname:<8} {name:<15} {message}',
                     style='{')
 
+logging.getLogger('asyncio').setLevel(logging.WARNING)
+
 log = logging.getLogger(__name__)
 
 if DEBUG:

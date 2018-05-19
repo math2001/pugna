@@ -48,7 +48,36 @@ def optstobounds(opts):
         except KeyError:
             pass
 
-class Button:
+class GuiElement:
+
+    OPT = Options()
+
+    def __init__(self, fonts, **useropts):
+        self.opt = copy.deepcopy(self.OPT)
+        self.opt.update(useropts)
+
+        try:
+            useropts.bounds
+        except AttributeError:
+            optstobounds(self.opt)
+
+        self.fonts = fonts
+
+        self.updateimg()
+
+    def updateimg(self):
+        with fontopt(self.fonts[self.opt.font], size=self.opt.size,
+                     fgcolor=self.opt.fg) as font:
+            self._updateimg(font)
+
+    def __repr__(self):
+        return str(self)
+
+    def setopt(self, **kwargs):
+        self.opt.update(kwargs)
+        self.updateimg()
+
+class Button(GuiElement):
 
     """Text in a button isn't wrapped"""
 
@@ -65,36 +94,21 @@ class Button:
         onclick=None,
         onmouseleave=None,
         onmouseenter=None,
+        text=None,
         # when the size of the button will change, these arguments
         # will be given to get_rect
         bounds={}
     )
 
-    def __init__(self, fonts, screen, text, **useropts):
-        self.opt = copy.deepcopy(self.OPT)
-        self.opt.update(useropts)
-
-        try:
-            useropts.bounds
-        except AttributeError:
-            optstobounds(self.opt)
-
-        self.text = text
-        self.screen = screen
-        self.fonts = fonts
-
+    def __init__(self, fonts, **useropts):
+        super().__init__(fonts, **useropts)
         self.hovered = False
 
-        self.updateimg()
-
-    def updateimg(self):
-        with fontopt(self.fonts[self.opt.font], size=self.opt.size,
-                     fgcolor=self.opt.fg) as font:
-            self._updateimg(font)
+        if self.opt.text is None:
+            raise ValueError("A buttons need some text. None given")
 
     def _updateimg(self, font):
-
-        fontrect = font.get_rect(self.text)
+        fontrect = font.get_rect(self.opt.text)
 
         width = self.opt.width
         if width is None:
@@ -114,16 +128,12 @@ class Button:
                              self.rect.inflate(borderwidth, borderwidth),
                              self.opt.borderwidth)
 
-        r = font.get_rect(self.text)
+        r = font.get_rect(self.opt.text)
         r.center = self.rect.center
         font.render_to(self.image, r, None)
 
         for attr in self.opt.bounds:
             setattr(self.rect, attr, self.opt.bounds[attr])
-
-    def setopt(self, **kwargs):
-        self.opt.update(kwargs)
-        self.updateimg()
 
     async def feed(self, e):
         if self.opt.onclick and e.type == MOUSEBUTTONDOWN \
@@ -141,17 +151,40 @@ class Button:
                     await self.opt.onmouseleave(self, e)
                 self.hovered = False
 
-    def render(self):
-        self.screen.blit(self.image, self.rect)
-
     def __str__(self):
         active = 'on' if self.active else 'off'
-        return f"<Button {active} text={self.text!r} @ {self.rect}>"
+        return f"<Button {active} text={self.opt.text!r} @ {self.rect}>"
 
-    def __repr__(self):
-        return str(self)
+class MessageBox:
+
+    OPT = Options(
+        width=400,
+        height=300,
+        fg=Color('white'),
+        bordercolor=Color(30, 30, 30),
+        borderwidth=1,
+        size=None,
+        font=None,
+        paddingx=20,
+        paddingy=40,
+        titlepaddingy=5,
+        onsend=None,
+        bounds={},
+        text='You need to give some text'
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(self, *args, **kwargs)
+
+    def _updateimg(self):
+        pass
 
 class GUI:
+
+    """Feeds and renders active elements
+
+    It can also be used to create elements (it manages giving fonts for example)
+    """
 
     def __init__(self, loop, screen, **fonts):
         self.loop = loop
@@ -169,7 +202,7 @@ class GUI:
 
     def render(self):
         for el in self.elements:
-            el.render()
+            self.screen.blit(el.image, el.rect)
 
     def activate(self, el):
         self.elements.append(el)
@@ -178,4 +211,7 @@ class GUI:
         self.elements.remove(el)
 
     def Button(self, *args, **kwargs):
-        return Button(self.fonts, self.screen, *args, **kwargs)
+        return Button(self.fonts, *args, **kwargs)
+
+    def MessageBox(self, *args, **kwags):
+        return MessageBox(self.fonts, *args, **kwargs)
