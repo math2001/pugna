@@ -3,11 +3,15 @@ import sys
 import os
 import logging
 
-logging.basicConfig(level=logging.INFO,
-                    filename='logs/tests.log',
-                    filemode='w',
-                    format='{levelname:<8} {name:<15} {message}',
-                    style='{')
+logging.basicConfig(level=logging.DEBUG, style='{',
+                    filename='logs/tests/app.log', filemode='w',
+                    format='{levelname:<8} {name:<15} {message}')
+
+asynciolog = logging.getLogger('asyncio')
+asynciolog.setLevel(logging.WARNING)
+asynciolog.addHandler(logging.StreamHandler())
+asynciolog.addHandler(logging.FileHandler('logs/tests/asyncio.log',
+                                          mode='w'))
 
 # only use absoute imports. The dirname of the current script is always added
 # to sys.path, which I don't want. I just want the root directory of the
@@ -16,25 +20,20 @@ for i, path in enumerate(sys.path):
     if path == os.path.dirname(os.path.abspath(__file__)):
         sys.path[i] = os.getcwd()
 
-from tests.connection import TestConnection
-from tests.server import TestServer
+from tests.aut import Aut
+# from tests.connection import TestConnection
+# from tests.server import TestServer
+from tests.client import TestClient
 
 SLOW_TEST_THRESHOLD = 0.3
 
 def average(*nums):
     return sum(nums) / len(nums)
 
-if __name__ == '__main__':
-    try:
-        unittest.main(exit=False)
-        pass
-    except KeyboardInterrupt as e:
-        pass
-
-    print()
-
-    # display slow tests
-    times = TestServer.get_times()
+def displayslowtests():
+    times = Aut.get_times()
+    if len(times['setup']) == 0:
+        return
 
     setup = round(average(*times['setup']), 2)
     teardown = round(average(*times['teardown']), 2)
@@ -45,8 +44,22 @@ if __name__ == '__main__':
         if time < SLOW_TEST_THRESHOLD:
             continue
         print(f"{name.rjust(20)} -> {round(time, 2)}s")
+
+
+if __name__ == '__main__':
+
+    try:
+        unittest.main(exit=False)
+        pass
+    except KeyboardInterrupt as e:
+        pass
+
+    print()
+
+    displayslowtests()
+
     # display the logs
     print()
     print(' LOGS '.center(70, '='), '\n', flush=True)
-    with open('logs/tests.log', 'r') as fp:
-        print(fp.read())
+    with open('logs/tests/app.log', 'r') as fp:
+        print(fp.read(), end='')

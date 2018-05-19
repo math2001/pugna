@@ -1,11 +1,9 @@
 import asyncio
 import unittest
-import logging
 import time
+import sys
 
 __all__ = ["Aut"]
-
-log = logging.getLogger(__name__)
 
 _times = {
     'setup': [],
@@ -54,6 +52,7 @@ class Aut(unittest.TestCase):
                 self.loop.run_until_complete(asyncio.coroutine(self.after)())
             else:
                 self.loop.run_until_complete(self.after())
+        self.loop.shutdown_asyncgens()
         self.loop.stop()
         self.loop.close()
         _times['teardown'].append(time.time() - self._start_time)

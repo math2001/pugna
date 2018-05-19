@@ -1,5 +1,8 @@
 import asyncio
-from utls.connection import Connection
+import logging
+from utils.connection import Connection
+
+log = logging.getLogger(__name__)
 
 __all__ = ['Client']
 
@@ -13,19 +16,25 @@ class Client:
 
     """An API to communicate with the server"""
 
-    def __init__(self, host, port):
-        self.co = Connection(*asyncio.open_connection(host, port))
+    @classmethod
+    async def new(cls, host, port):
+        self = cls()
+        self.co = Connection(*await asyncio.open_connection(host, port))
+        return self
 
     async def login(self, username, uuid):
+        """Logs in the server as the ONWER"""
+        log.debug("Log into the server")
         await self.co.write(kind='identification', by=username, uuid=uuid)
+        log.debug("Reading from the server")
         res = await self.co.read()
         if res['kind'] != 'identification state change':
-            return Response(error=True,
+            return Response(error=True, accepted=False,
                             msg=f"Invalid request kind: {res['kind']!r}")
         if res['state'] == 'accepted':
-            return Response(msg=f"Accepted!")
-        elif res['state'] == 'accepted':
-            return
+            return Response(accepted=True)
+        elif res['state'] == 'refused':
+            return Response(accepted=False, msg=res['reason'])
 
     def shutdown(self):
         self.co.close()

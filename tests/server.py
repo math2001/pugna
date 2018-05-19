@@ -51,7 +51,7 @@ class TestServer(Aut):
         ownerco = await self.newconnection()
         # log into the server
         await ownerco.write(kind='identification', uuid='owner',
-                                by='owner username')
+                            by='owner username')
 
         res = await ownerco.read()
         self.assertEqual(res, {'kind': 'identification state change',

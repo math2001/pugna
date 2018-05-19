@@ -29,6 +29,11 @@ class HostGame:
             ok="Let's get fighting", cancel="Na...", font='ui',
             onsend=self.requestsend)
 
+        self.errorbox = self.m.gui.MessageBox(
+            title="Error", msg='Some message', ok='Hum... Ok', font='ui',
+            onsend=self.errorok
+        )
+
     async def requestsend(self, oked):
         if oked:
             self.task = self.m.client.accept_request()
@@ -43,6 +48,19 @@ class HostGame:
 
         self.m.state = STATE_LOGGING
         self.task = self.m.schedule(client.login(self.m.uuid))
+
+    def _task_exception(self, fut):
+        exception = fut.exception()
+        if not exception:
+            return
+        self.errorbox.setopt(title="Error")
+
+
+    def schedule(self, coro):
+        """A wrapper to handle exception raised by coroutines"""
+        task = self.m.schedule(coro)
+        task.add_done_callback(self._task_exception)
+        return task
 
     async def onerrorok(self):
         """Called when the error popup ok btn has been clicked"""
