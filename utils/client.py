@@ -3,6 +3,7 @@ import logging
 from utils.connection import Connection
 
 log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
 
 __all__ = ['Client']
 
@@ -29,7 +30,7 @@ class Client:
         log.debug("Reading from the server")
         res = await self.co.read()
         if res['kind'] != 'identification state change':
-            return Response(error=True, accepted=False,
+            return Response(error=True, accepted=None,
                             msg=f"Invalid request kind: {res['kind']!r}")
         if res['state'] == 'accepted':
             return Response(accepted=True)
@@ -37,4 +38,6 @@ class Client:
             return Response(accepted=False, msg=res['reason'])
 
     def shutdown(self):
+        """Because this is based on Connection.close(), the same problem
+        occurs (we can only order to close the connection, but we can check)"""
         self.co.close()
