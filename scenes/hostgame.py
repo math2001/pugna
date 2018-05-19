@@ -19,17 +19,22 @@ class HostGame:
     def __init__(self, m):
         self.m = m
 
+        okbtn = self.m.gui.Button(text="Let's get fighting")
+
         self.requestbox = self.m.gui.ConfirmBox(
             title="Someone wants to fight ya...", msg="Msg",
-            ok="Let's get fighting", cancel="Na...", font='ui',
+            ok=okbtn, cancel="Na...", font='ui',
             onsend=self.requestsend)
 
         self.messagebox = self.m.gui.MessageBox(
-            title="Error", msg='Some message', ok='Hum... Ok', font='ui',
-            onsend=self.messageok
+            title="Error", msg='Some message', ok=okbtn, font='ui',
+            onsend=self.onmessageok, center=self.m.rect.center
         )
 
     async def on_focus(self):
+        self.messagebox.setopt(msg="Hello world, this is mathieu paturel!\nyep!")
+        self.m.gui.activate(self.messagebox)
+        return
         self.server = Server(self.m.uuid, self.m.loop)
 
         self.m.state = STATE_CREATING
@@ -68,6 +73,7 @@ class HostGame:
         raise NotImplementedError("Do something depending on the state")
 
     async def update(self):
+        return
         if self.task.done():
 
             res = self.task.result()

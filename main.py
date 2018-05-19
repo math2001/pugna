@@ -76,6 +76,10 @@ class SceneManager:
             fancy=self.fancyfont
         )
 
+        # set defaults for gui elements
+        utils.gui.Button.OPT.font = 'ui'
+        # utils.gui.Button.OPT.onmouseenter = button
+
         self.uuid = uuid.uuid4().hex
 
     def resetfonts(self):
@@ -154,4 +158,4 @@ class SceneManager:
 
     state = property(getstate, setstate)
 
-SceneManager().run("Menu")
+SceneManager().run("HostGame")
