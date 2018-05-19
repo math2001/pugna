@@ -27,7 +27,8 @@ class TestClient(Aut):
 
     async def test_successful_login(self):
         """Test successful login"""
-        server = self.clients[0] # this is the client from the server pov
+        # this is the client from the server point of view
+        server = self.clients[0]
 
         task = self.loop.create_task(self.client.login('username', 'uuid'))
         req = await server.read()
@@ -37,3 +38,18 @@ class TestClient(Aut):
                            state='accepted')
         res = await task
         self.assertTrue(res.accepted)
+
+    async def test_refused_login(self):
+        """Test logging in with invalid ids"""
+        server = self.clients[0]
+
+        task = self.loop.create_task(self.client.login('username', 'uuid'))
+        req = await server.read()
+        self.assertEqual(req, {'kind': 'identification', 'by': 'username',
+                               'uuid': 'uuid'})
+        await server.write(kind='identification state change',
+                           state='refused',
+                           reason='owner refused')
+        res = await task
+        self.assertFalse(res.accepted)
+        self.assertEqual(res.msg, 'owner refused')
