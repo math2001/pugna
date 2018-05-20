@@ -272,8 +272,13 @@ class Server:
             # quick note: we could call these functions in any order, since they
             # don't block the loop in any way, everything is based on the state
             # of the server
-            await self.handle_new_connections()
-            await self.handle_requests()
-            await self.handle_hero_selection()
-            await self.handle_game()
+            try:
+                await self.handle_new_connections()
+                await self.handle_requests()
+                await self.handle_hero_selection()
+                await self.handle_game()
+            except ConnectionClosed as e:
+                log.exception("Client left: shuting down")
+                self.task_gameloop = None # so that we don't cancel ourself
+                return await self.shutdown()
 

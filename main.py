@@ -36,8 +36,9 @@ for i, path in enumerate(sys.path):
 
 
 def handle_task(fut):
-    if fut.exception():
-        fut.result() # raise exception
+    exception = fut.exception()
+    if exception:
+        log.critical("An exemption has occured in a task", exc_info=exception)
 
 def setstate(self, state):
     log.info(f"{self.__class__.__name__}{{{state}}}")
@@ -147,10 +148,12 @@ class SceneManager:
             await scene.on_focus()
 
     def schedule(self, coro):
-        """A simple wrapper do simplify a scene's code"""
-        task = self.loop.create_task(coro)
-        task.add_done_callback(handle_task)
-        return task
+       """A simple wrapper do simplify a scene's code
+
+       It logs any error that occurs"""
+       task = self.loop.create_task(coro)
+       task.add_done_callback(handle_task)
+       return task
 
     async def quit(self):
         if hasattr(self.scene, 'on_blur'):

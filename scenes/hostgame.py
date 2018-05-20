@@ -33,7 +33,8 @@ class HostGame:
 
         self.messagebox = self.m.gui.MessageBox(
             title="Error", msg='Some message', ok=okbtn, font='ui',
-            onsend=self.onmessageok, center=self.m.rect.center
+            onsend=self.onmessageok, center=self.m.rect.center,
+            width=400, height=240
         )
 
     async def on_focus(self):
@@ -60,29 +61,26 @@ class HostGame:
             self.task = self.m.client.refuse_request()
 
     def _task_exception(self, fut):
+        print("!!!!!!!!!!!!!!!!! called")
         exception = fut.exception()
         if not exception:
             return
         self.messagebox.setopt(title="Error")
 
-    def schedule(self, coro):
-        """A wrapper to handle exception raised by coroutines"""
-        task = self.m.schedule(coro)
-        task.add_done_callback(self._task_exception)
-        return task
-
-    async def onmessageok(self):
+    async def onmessageok(self, element, e):
         """Called when the error popup ok btn has been clicked"""
         raise NotImplementedError("Do something depending on the state")
 
     async def update(self):
-        if not self.task.done():
+        # if task is None, this means that an error has occured and no task is
+        # currently running (the error is being displayed)
+        if self.task is None or not self.task.done():
             return
         res = self.task.result()
         if res.error is True:
-            log.error(f"Got error: {res.msg!r}")
             self.messagebox.setopt(msg=res.msg)
             self.m.gui.activate(self.messagebox)
+            self.task = None
             return
 
         if self.m.state == STATE_LOGGING:

@@ -7,6 +7,20 @@ log.setLevel(logging.DEBUG)
 
 __all__ = ['Client']
 
+def handle_exception(fn):
+    async def wrapper(*args, **kwargs):
+        try:
+            return await fn(*args, **kwargs)
+        except Exception as e:
+            log.exception("Exception occurred on client's API")
+            return Response(
+                error=True,
+                exception=e,
+                msg=f'An exception of type {e.__class__.__name__!r} has '
+                    'occurred. Please see the logs for details and report it.'
+                    '\n\nSorry about that :(')
+    return wrapper
+
 class Response:
 
     def __init__(self, **kwargs):
@@ -23,6 +37,7 @@ class Client:
         self.co = Connection(*await asyncio.open_connection(host, port))
         return self
 
+    @handle_exception
     async def login(self, username, uuid):
         """Logs in the server as the ONWER"""
         log.debug("Log into the server")
@@ -39,6 +54,7 @@ class Client:
         elif res['state'] == 'refused':
             return Response(accepted=False, msg=res['reason'])
 
+    @handle_exception
     async def findplayer(self):
         res = await self.co.read()
         if res['kind'] != 'new request':
