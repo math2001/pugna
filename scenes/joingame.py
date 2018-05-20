@@ -1,0 +1,3 @@
+
+class JoinGame:
+    pass

@@ -87,6 +87,8 @@ class SceneManager:
             fancy=self.fancyfont
         )
 
+        self.scenes = {}
+
         # set defaults for gui elements
         utils.gui.GuiElement.OPT.font = 'ui'
         utils.gui.GuiElement.OPT.fg = pygame.Color(200, 200, 200)
@@ -130,7 +132,10 @@ class SceneManager:
 
         log.info(f"-> {scenename}")
 
-        scene = getattr(scenes, scenename)(self)
+        scene = self.scenes.get(scenename)
+        if scene is None:
+            scene = getattr(scenes, scenename)(self)
+            self.scenes[scenename] = scene
 
         if hasattr(self.scene, 'on_blur'):
             await self.scene.on_blur(scene)
@@ -213,4 +218,4 @@ class SceneManager:
 
     state = property(getstate, setstate)
 
-SceneManager().run("HostGame")
+SceneManager().run("SplashScreen")
