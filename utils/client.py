@@ -32,6 +32,7 @@ class Client:
     """An API to communicate with the server"""
 
     @classmethod
+    @handle_exception
     async def new(cls, host, port):
         self = cls()
         self.co = Connection(*await asyncio.open_connection(host, port))

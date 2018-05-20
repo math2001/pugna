@@ -46,6 +46,7 @@ class HostGame:
         self.m.state = STATE_STARTING
         await self.server.start(PORT)
 
+        # TODO: handle exception here
         self.m.client = await Client.new('localhost', PORT)
 
         self.m.state = STATE_LOGGING
@@ -93,7 +94,7 @@ class HostGame:
             self.m.gui.activate(self.requestbox)
 
     def render(self):
-        self.m.fancyfont.size = 80
+        self.m.fancyfont.size = TITLE_SIZE
         rect = self.m.writetext('fancy', 'Hosting a game', top=20,
                                 centerx='centerx')
 

@@ -99,9 +99,10 @@ class GuiElement:
         except AttributeError:
             optstobounds(self.opt)
 
-        self.gui = gui
+        if isinstance(self.opt.fg, str):
+            self.opt.fg = pygame.Color(self.opt.fg)
 
-        self.updateimg()
+        self.gui = gui
 
     def render(self):
         self.gui.screen.blit(self.image, self.rect)
@@ -111,6 +112,7 @@ class GuiElement:
                      fgcolor=self.opt.fg) as font:
             font.origin = False
             self._updateimg(font)
+        return self
 
     def __repr__(self):
         return str(self)
@@ -233,6 +235,8 @@ class MessageBox(GuiElement):
         titlecolor=None,
         onsend=None,
         text='Popup text',
+        title='Title',
+        msg='A message...',
         ok=None, # this must be a button
     )
 
@@ -334,7 +338,6 @@ class ConfirmBox(MessageBox):
     def render(self):
         super().render()
         self.opt.cancel.render()
-
 
 class Input(GuiElement):
 
@@ -467,26 +470,28 @@ class GUI:
         for el in self.elements:
             el.render()
 
-    def activate(self, el):
-        self.elements.append(el)
+    def activate(self, *els):
+        for el in els:
+            self.elements.append(el)
 
-    def deactivate(self, el):
-        try:
-            self.elements.remove(el)
-        except ValueError:
-            pass
+    def deactivate(self, *els):
+        for el in els:
+            try:
+                self.elements.remove(el)
+            except ValueError:
+                pass
 
     def Button(self, *args, **kwargs):
-        return Button(self, *args, **kwargs)
+        return Button(self, *args, **kwargs).updateimg()
 
     def MessageBox(self, *args, **kwargs):
-        return MessageBox(self, *args, **kwargs)
+        return MessageBox(self, *args, **kwargs).updateimg()
 
     def ConfirmBox(self, *args, **kwargs):
-        return ConfirmBox(self, *args, **kwargs)
+        return ConfirmBox(self, *args, **kwargs).updateimg()
 
     def InputBox(self, **opts):
-        return InputBox(self, **opts)
+        return InputBox(self, **opts).updateimg()
 
     def Input(self, **opts):
-        return Input(self, **opts)
+        return Input(self, **opts).updateimg()
