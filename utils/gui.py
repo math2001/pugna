@@ -87,10 +87,10 @@ class GuiElement:
     )
 
     def __init__(self, gui, **useropts):
-        # the common gui elements options
-        self.opt = copy.deepcopy(GuiElement.OPT)
-        # the default options for this specific gui element
-        self.opt.update(copy.deepcopy(self.OPT))
+        self.opt = Options()
+        # update options from the GuiElement > smallest class
+        for c in reversed(self.__class__.__mro__[:-1]):
+            self.opt.update(copy.deepcopy(c.OPT))
         # the given options
         self.opt.update(useropts)
 
@@ -290,7 +290,14 @@ class MessageBox(GuiElement):
         self.opt.ok.render()
 
 class ConfirmBox(MessageBox):
-    pass
+
+    OPT = Options(
+        cancel=None
+    )
+
+    def __init__(self, gui, **opts):
+        super().__init__(gui, **opts)
+        print(self.opt)
 
 class Input(GuiElement):
 
