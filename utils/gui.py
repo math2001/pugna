@@ -77,10 +77,21 @@ def optstobounds(opts):
 
 class GuiElement:
 
-    OPT = Options()
+    OPT = Options(
+        fg=Color('white'),
+        borderwidth=1,
+        bordercolor=Color(30, 30, 30),
+        bounds={},
+        font=None,
+        size=None
+    )
 
     def __init__(self, gui, **useropts):
-        self.opt = copy.deepcopy(self.OPT)
+        # the common gui elements options
+        self.opt = copy.deepcopy(GuiElement.OPT)
+        # the default options for this specific gui element
+        self.opt.update(copy.deepcopy(self.OPT))
+        # the given options
         self.opt.update(useropts)
 
         try:
@@ -135,11 +146,6 @@ class Button(GuiElement):
     OPT = Options(
         width=None,
         height=None,
-        fg=Color("white"),
-        bordercolor=Color(30, 30, 30),
-        borderwidth=1,
-        size=None,
-        font=None, # a string
         paddingx=10,
         paddingy=20,
         onclick=None,
@@ -214,16 +220,10 @@ class MessageBox(GuiElement):
     OPT = Options(
         width=350,
         height=200,
-        fg=Color('white'),
-        bordercolor=Color(30, 30, 30),
-        borderwidth=1,
-        size=None,
-        font=None,
         paddingx=10,
         paddingy=10,
         titlepaddingy=10,
         onsend=None,
-        bounds={},
         text='Popup text',
         ok=None, # this must be a button
     )
@@ -293,14 +293,8 @@ class Input(GuiElement):
     OPT = Options(
         width=200,
         height=40,
-        fg=Color('white'),
-        bordercolor=Color(30, 30, 30),
-        borderwidth=1,
-        size=None,
-        font=None,
         origin=(10, 10),
         onsend=None,
-        bounds={},
         initialtext='',
         maxlength=0
     )
@@ -338,11 +332,7 @@ class InputBox(MessageBox):
     OPT = Options(
         width=350,
         height=200,
-        fg=Color('white'),
-        bordercolor=Color(30, 30, 30),
-        borderwidth=1
     )
-
 
 class GUI:
 

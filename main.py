@@ -84,7 +84,8 @@ class SceneManager:
         )
 
         # set defaults for gui elements
-        utils.gui.Button.OPT.font = 'ui'
+        utils.gui.GuiElement.OPT.font = 'ui'
+        utils.gui.GuiElement.OPT.fg = pygame.Color(200, 200, 200)
         utils.gui.Button.OPT.onmouseenter = btnmouseenter
         utils.gui.Button.OPT.onmouseleave = btnmouseleave
 
