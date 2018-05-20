@@ -230,6 +230,7 @@ class MessageBox(GuiElement):
         paddingx=10,
         paddingy=10,
         titlepaddingy=10,
+        titlecolor=None,
         onsend=None,
         text='Popup text',
         ok=None, # this must be a button
@@ -262,10 +263,12 @@ class MessageBox(GuiElement):
                              self.rect.inflate(borderwidth, borderwidth),
                              self.opt.borderwidth)
 
+        # render title
         titlerect = font.get_rect(self.opt.title)
         titlerect.centerx = self.rect.centerx
         titlerect.top = self.opt.titlepaddingy
-        font.render_to(self.image, titlerect, None)
+        font.render_to(self.image, titlerect, None,
+                       fgcolor=self.opt.titlecolor or self.opt.fg)
 
         textsurf = pygame.Surface((self.rect.width - self.opt.paddingx * 2,
             self.rect.height - titlerect.height - self.opt.titlepaddingy * 2 \

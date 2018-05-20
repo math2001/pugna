@@ -72,7 +72,7 @@ class HostGame:
 
         res = self.task.result()
         if res.error is True:
-            self.messagebox.setopt(msg=res.msg)
+            self.messagebox.setopt(msg=res.msg, titlecolor=pygame.Color('tomato'))
             self.m.gui.activate(self.messagebox)
             self.task = None
             return
