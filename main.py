@@ -176,7 +176,7 @@ class SceneManager:
             await asyncio.sleep(0)
             pygame.display.flip()
 
-            clock.tick(30)
+            clock.tick(MAX_FPS)
             if DEBUG:
                 pygame.display.set_caption(f"{CAPTION} v{VERSION} | "
                                            f"{round(clock.get_fps())}")
@@ -187,4 +187,4 @@ class SceneManager:
 
     state = property(getstate, setstate)
 
-SceneManager().run("HostGame")
+SceneManager().run("SplashScreen")

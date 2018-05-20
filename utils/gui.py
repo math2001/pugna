@@ -246,10 +246,7 @@ class MessageBox(GuiElement):
             raise ValueError("Button shouldn't have onclick event defined, "
                              f"got {self.opt.ok.opt.onclick}")
 
-        self.opt.ok.opt.onclick = self.onsend
-
-    async def onsend(self, btn, e):
-        await self.opt.onsend()
+        self.opt.ok.opt.onclick = self.opt.onsend
 
     async def feed(self, e):
         await self.opt.ok.feed(e)
@@ -292,12 +289,49 @@ class MessageBox(GuiElement):
 class ConfirmBox(MessageBox):
 
     OPT = Options(
-        cancel=None
+        cancel=None,
+        btnautoheight=True
     )
 
     def __init__(self, gui, **opts):
         super().__init__(gui, **opts)
-        print(self.opt)
+
+        if not isinstance(self.opt.cancel, Button):
+            raise TypeError("opt.cancle should be of type Button, got "
+                            f"{self.opt.cancel.__class__.__name__}")
+
+        if self.opt.cancel.opt.onclick is not None:
+            raise ValueError("Button shouldn't have onclick event defined, "
+                             f"got {self.opt.cancel.opt.onclick}")
+
+        self.opt.cancel.opt.onclick = self.onsend
+        self.opt.ok.opt.onclick = self.onsend
+
+    async def onsend(self, btn, e):
+        ok = btn is self.opt.ok
+        if self.opt.onsend:
+            await self.opt.onsend(ok, btn, e)
+
+    async def feed(self, e):
+        await super().feed(e)
+        await self.opt.cancel.feed(e)
+
+    def _updateimg(self, font):
+        super()._updateimg(font)
+        self.opt.cancel.setbounds(right=self.opt.ok.rect.left - self.opt.paddingx,
+                                  bottom=self.opt.ok.rect.bottom)
+        if self.opt.btnautoheight:
+            bigger = max(self.opt.ok, self.opt.cancel,
+                         key=lambda btn: btn.rect.height)
+            if bigger is self.opt.ok:
+                self.opt.cancel.setopt(height=self.opt.ok.rect.height)
+            else:
+                self.opt.ok.setopt(height=self.opt.cancel.rect.height)
+
+    def render(self):
+        super().render()
+        self.opt.cancel.render()
+
 
 class Input(GuiElement):
 

@@ -48,10 +48,8 @@ class HostGame:
         self.task = self.m.schedule(self.m.client.login(self.m.username,
                                                         self.m.uuid))
 
-        self.m.gui.activate(self.requestbox)
-
-    async def requestsend(self, oked):
-        if oked:
+    async def requestsend(self, ok, element, event):
+        if ok:
             self.task = self.m.client.accept_request()
             self.state = STATE_WAITING_SERVER
         else:
