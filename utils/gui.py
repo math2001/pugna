@@ -109,6 +109,7 @@ class GuiElement:
     def updateimg(self):
         with fontopt(self.gui.fonts[self.opt.font], size=self.opt.size,
                      fgcolor=self.opt.fg) as font:
+            font.origin = False
             self._updateimg(font)
 
     def __repr__(self):
@@ -117,6 +118,12 @@ class GuiElement:
     def setopt(self, **kwargs):
         self.opt.update(kwargs)
         self.updateimg()
+
+    def setbounds(self, **kwargs):
+        """You shouldn't use guiel.rect = ..., but set bounds, as it'll make
+        sure to keep the same position after guiel.setopt() calls"""
+        self.opt.bounds = kwargs
+        self.updatefrombounds()
 
     def debug(self, color, rect, surf=None):
         pygame.draw.rect(surf or self.gui.screen, Color(color), rect, 1)
@@ -327,12 +334,70 @@ class Input(GuiElement):
                 self.text += e.unicode
             self.updateimg()
 
-class InputBox(MessageBox):
+class InputBox(GuiElement):
 
     OPT = Options(
         width=350,
-        height=200,
+        height=170,
+        label='Input:',
+        paddingx=20,
+        paddingy=10,
+        titlepaddingy=20,
+        onsend=None,
+        input=None, # should be gui.Input
+        ok=None # should be gui.Button
     )
+
+    def __init__(self, gui, **opts):
+        super().__init__(gui, **opts)
+
+        if not isinstance(self.opt.input, Input):
+            raise TypeError("Expected 'input' to be of type 'Input', got"
+                             f"{self.opt.input.__class__.__name__!r}")
+
+        if self.opt.input.opt.onsend is not None:
+            raise ValueError("Input shouldn't have an onsend listener already")
+
+        if not isinstance(self.opt.ok, Button):
+            raise TypeError("Expected 'ok' to be of type 'Button', got"
+                             f"{self.opt.ok.__class__.__name__!r}")
+
+        if self.opt.ok.opt.onclick is not None:
+            raise ValueError("Button shouldn't have an onclick listener already")
+
+        self.opt.input.opt.onsend = self.opt.onsend
+        self.opt.ok.opt.onclick = self.opt.onsend
+
+    def _updateimg(self, font):
+        self.image = pygame.Surface((self.opt.width, self.opt.height))
+        self.rect = self.image.get_rect()
+
+        self.drawborder()
+
+        rect = font.get_rect(self.opt.label)
+        rect.top = self.opt.titlepaddingy
+        rect.centerx = self.rect.centerx
+        font.render_to(self.image, rect, None)
+
+        self.updatefrombounds()
+
+        self.opt.ok.setbounds(bottom=self.rect.bottom - self.opt.paddingy,
+                              right=self.rect.right - self.opt.paddingx)
+
+        self.opt.input.setbounds(center=self.rect.center)
+
+    async def feed(self, e):
+        await self.opt.input.feed(e)
+        await self.opt.ok.feed(e)
+
+    def render(self):
+        super().render()
+        self.opt.input.render()
+        self.opt.ok.render()
+
+    @property
+    def text(self):
+        return self.opt.input.text
 
 class GUI:
 

@@ -176,4 +176,4 @@ class SceneManager:
 
     state = property(getstate, setstate)
 
-SceneManager().run("Username")
+SceneManager().run("SplashScreen")
