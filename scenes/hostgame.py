@@ -60,22 +60,16 @@ class HostGame:
             self.state = STATE_WAITING_PLAYER
             self.task = self.m.client.refuse_request()
 
-    def _task_exception(self, fut):
-        print("!!!!!!!!!!!!!!!!! called")
-        exception = fut.exception()
-        if not exception:
-            return
-        self.messagebox.setopt(title="Error")
-
     async def onmessageok(self, element, e):
-        """Called when the error popup ok btn has been clicked"""
-        raise NotImplementedError("Do something depending on the state")
+        """Called when the message popup ok btn has been clicked"""
+        await self.m.focus("Menu")
 
     async def update(self):
         # if task is None, this means that an error has occured and no task is
         # currently running (the error is being displayed)
         if self.task is None or not self.task.done():
             return
+
         res = self.task.result()
         if res.error is True:
             self.messagebox.setopt(msg=res.msg)

@@ -142,7 +142,7 @@ class SceneManager:
         if not hasattr(self.scene, 'update'):
             self.scene.update = void
         if not hasattr(self.scene, 'render'):
-            self.scene.render = void
+            self.scene.render = lambda: None
 
         if hasattr(self.scene, 'on_focus'):
             await scene.on_focus()
