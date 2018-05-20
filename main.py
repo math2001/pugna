@@ -9,6 +9,7 @@ import sys, os
 import scenes
 import utils.gui
 import uuid
+import math
 
 from constants import *
 
@@ -69,6 +70,7 @@ class SceneManager:
         self.frames_count = 0
 
         pygame.key.set_repeat(300, 50)
+        pygame.mouse.set_visible(False)
         pygame.display.set_caption(CAPTION)
 
         # load fonts
@@ -138,13 +140,27 @@ class SceneManager:
             await self.scene.on_blur(self.scene)
             self.going = False
 
+    def rendercursor(self):
+        if not pygame.mouse.get_focused():
+            return
+        cp = self.cursor_position
+        points = [cp]
+        points.append((cp[0] + math.sin(CURSOR_ROTATION) * CURSOR_SIZE,
+                       cp[1] + math.cos(CURSOR_ROTATION) * CURSOR_SIZE))
+        points.append((cp[0] + math.sin(CURSOR_ROTATION + CURSOR_SPREAD) * CURSOR_SIZE,
+                       cp[1] + math.cos(CURSOR_ROTATION + CURSOR_SPREAD) * CURSOR_SIZE))
+        pygame.draw.polygon(self.screen, CURSOR_COLOR, points, CURSOR_WIDTH)
+
     async def gameloop(self):
         clock = pygame.time.Clock()
 
         self.going = True
+        self.cursor_position = pygame.mouse.get_pos()
 
         while self.going:
             for e in pygame.event.get():
+                if e.type == pygame.MOUSEMOTION:
+                    self.cursor_position = e.pos
                 await self.gui.feed(e)
                 if e.type == pygame.QUIT:
                     return await self.quit()
@@ -156,8 +172,8 @@ class SceneManager:
             self.screen.fill(pygame.Color('black'))
 
             await self.scene.render()
-
             self.gui.render()
+            self.rendercursor()
 
             self.frames_count += 1
 
