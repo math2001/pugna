@@ -226,7 +226,7 @@ class MessageBox(GuiElement):
 
     OPT = Options(
         width=350,
-        height=200,
+        height=150,
         paddingx=10,
         paddingy=10,
         titlepaddingy=10,
@@ -235,8 +235,8 @@ class MessageBox(GuiElement):
         ok=None, # this must be a button
     )
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, gui, **opts):
+        super().__init__(gui, **opts)
 
         if not isinstance(self.opt.ok, Button):
             raise TypeError("opt.ok should be of type Button, got "
@@ -280,11 +280,10 @@ class MessageBox(GuiElement):
         self.image.blit(textsurf, (self.opt.paddingx,
                                    titlerect.height + self.opt.titlepaddingy * 2))
 
-        for attr in self.opt.bounds:
-            setattr(self.rect, attr, self.opt.bounds[attr])
+        self.updatefrombounds()
 
-        self.opt.ok.rect.bottom = self.rect.bottom - self.opt.paddingy
-        self.opt.ok.rect.right = self.rect.right - self.opt.paddingx
+        self.opt.ok.setbounds(bottom=self.rect.bottom - self.opt.paddingy,
+                              right=self.rect.right - self.opt.paddingx)
 
     def render(self):
         self.gui.screen.blit(self.image, self.rect)

@@ -20,14 +20,18 @@ class HostGame:
         self.m = m
 
         okbtn = self.m.gui.Button(text="Let's get fighting")
+        cancelbtn = self.m.gui.Button(text='Na. Too scared')
 
         self.requestbox = self.m.gui.ConfirmBox(
-            title="Someone wants to fight ya...", msg="Msg",
-            ok=okbtn.copy(), cancel="Na...", font='ui',
-            onsend=self.requestsend)
+            title="Defi!",
+            msg="{username} wants to fight you to death",
+            ok=okbtn.copy(), cancel=cancelbtn,
+            onsend=self.requestsend, center=self.m.rect.center)
+
+        okbtn = self.m.gui.Button(text='Hum... Ok')
 
         self.messagebox = self.m.gui.MessageBox(
-            title="Error", msg='Some message', ok=okbtn.copy(), font='ui',
+            title="Error", msg='Some message', ok=okbtn, font='ui',
             onsend=self.onmessageok, center=self.m.rect.center
         )
 
@@ -43,6 +47,8 @@ class HostGame:
         self.m.state = STATE_LOGGING
         self.task = self.m.schedule(self.m.client.login(self.m.username,
                                                         self.m.uuid))
+
+        self.m.gui.activate(self.requestbox)
 
     async def requestsend(self, oked):
         if oked:
