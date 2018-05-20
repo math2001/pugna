@@ -69,31 +69,32 @@ class HostGame:
         raise NotImplementedError("Do something depending on the state")
 
     async def update(self):
-        if self.task.done():
+        if not self.task.done():
+            return
+        res = self.task.result()
+        if res.error is True:
+            log.error(f"Got error: {res.msg!r}")
+            self.messagebox.setopt(msg=res.msg)
+            self.m.gui.activate(self.messagebox)
+            return
 
-            res = self.task.result()
-            if res.error is True:
-                log.error(f"Got error: {res.msg!r}")
-                self.messagebox.setopt(msg=res.msg)
-                self.m.gui.activate(self.messagebox)
+        if self.m.state == STATE_LOGGING:
+            if res.accepted is False:
+                log.critical(f"Could not login to the server: {res!r}")
+                self.m.errorbox.setopt(msg=res.msg)
+                self.m.gui.activate(self.errorbox)
                 return
 
-            if self.m.state == STATE_LOGGING:
-                if res.accepted is False:
-                    log.critical(f"Could not login to the server: {res!r}")
-                    self.m.errorbox.setopt(msg=res.msg)
-                    self.m.gui.activate(self.errorbox)
-                    return
+            self.m.state = STATE_WAITING_PLAYER
+            self.task = self.m.schedule(self.m.client.findplayer())
 
-                self.m.state = STATE_WAITING_PLAYER
-                self.task = self.m.schedule(self.m.client.findplayer())
-
-            elif self.m.state == STATE_WAITING_PLAYER:
-                self.m.state = STATE_WAITING_INPUT
-                self.requestbox.setopt(msg=f'{res.by} wants to play with you!')
-                self.m.gui.activate(self.requestbox)
-
+        elif self.m.state == STATE_WAITING_PLAYER:
+            self.m.state = STATE_WAITING_INPUT
+            self.requestbox.setopt(msg=f'{res.by} wants to play with you!')
+            self.m.gui.activate(self.requestbox)
 
     async def on_blur(self, scene):
-        await self.m.client
+        self.m.client.shutdown()
         await self.server.shutdown()
+        self.m.gui.deactivate(self.requestbox)
+        self.m.gui.deactivate(self.messagebox)

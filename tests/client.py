@@ -8,6 +8,7 @@ from tests.aut import Aut
 from constants import *
 
 log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
 
 class TestClient(Aut):
 
@@ -20,6 +21,10 @@ class TestClient(Aut):
 
         self.assertEqual(len(self.clients), 1)
 
+    async def newconnection(self):
+        """Opens a new raw connection to self.server"""
+        return Connection(*(await asyncio.open_connection('localhost', PORT)))
+
     async def after(self):
         self.server.close()
         await self.server.wait_closed()
@@ -27,7 +32,7 @@ class TestClient(Aut):
 
     async def test_successful_login(self):
         """Test successful login"""
-        # this is the client from the server point of view
+        # self.clients[0] is the server's connection with self.client
         server = self.clients[0]
 
         task = self.loop.create_task(self.client.login('username', 'uuid'))
@@ -53,4 +58,18 @@ class TestClient(Aut):
         res = await task
         self.assertFalse(res.accepted)
         self.assertEqual(res.msg, 'owner refused')
+
+    async def test_findplayer(self):
+        """Waits for a player to request join"""
+        server = self.clients[0]
+
+        task = self.loop.create_task(self.client.findplayer())
+
+        log.debug("send fake request from server, awaiting response")
+
+        await server.write(kind='new request', by='somekid')
+
+        # check if the owner (self.client) did recieve the request
+        req = await task
+        self.assertEqual(req.by, 'somekid')
 

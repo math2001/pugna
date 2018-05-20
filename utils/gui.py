@@ -428,7 +428,10 @@ class GUI:
         self.elements.append(el)
 
     def deactivate(self, el):
-        self.elements.remove(el)
+        try:
+            self.elements.remove(el)
+        except ValueError:
+            pass
 
     def Button(self, *args, **kwargs):
         return Button(self, *args, **kwargs)
