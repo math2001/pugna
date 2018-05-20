@@ -78,6 +78,8 @@ class SceneManager:
         self.fancyfont = pygame.freetype.Font('media/fonts/sigmar.ttf')
         self.resetfonts()
 
+        self.cursor = pygame.image.load('media/images/cursor.png').convert_alpha()
+
         self.gui = utils.gui.GUI(
             self.loop,
             self.screen,
@@ -143,13 +145,7 @@ class SceneManager:
     def rendercursor(self):
         if not pygame.mouse.get_focused():
             return
-        cp = self.cursor_position
-        points = [cp]
-        points.append((cp[0] + math.sin(CURSOR_ROTATION) * CURSOR_SIZE,
-                       cp[1] + math.cos(CURSOR_ROTATION) * CURSOR_SIZE))
-        points.append((cp[0] + math.sin(CURSOR_ROTATION + CURSOR_SPREAD) * CURSOR_SIZE,
-                       cp[1] + math.cos(CURSOR_ROTATION + CURSOR_SPREAD) * CURSOR_SIZE))
-        pygame.draw.polygon(self.screen, CURSOR_COLOR, points, CURSOR_WIDTH)
+        self.screen.blit(self.cursor, self.cursor_position)
 
     async def gameloop(self):
         clock = pygame.time.Clock()
