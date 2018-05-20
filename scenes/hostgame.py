@@ -42,7 +42,7 @@ class HostGame:
 
         self.m.state = STATE_LOGGING
         self.task = self.m.schedule(self.m.client.login(self.m.username,
-                                                        elf.m.uuid))
+                                                        self.m.uuid))
 
     async def requestsend(self, oked):
         if oked:

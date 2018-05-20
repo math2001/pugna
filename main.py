@@ -51,6 +51,12 @@ getstate = lambda self: self._state
 pygame.display.init()
 pygame.freetype.init()
 
+async def btnmouseenter(btn, e):
+    btn.setopt(bordercolor=pygame.Color(100, 100, 100))
+
+async def btnmouseleave(btn, e):
+    btn.setopt(bordercolor=pygame.Color(30, 30, 30))
+
 class SceneManager:
 
     def __init__(self):
@@ -78,9 +84,13 @@ class SceneManager:
 
         # set defaults for gui elements
         utils.gui.Button.OPT.font = 'ui'
-        # utils.gui.Button.OPT.onmouseenter = button
+        utils.gui.Button.OPT.onmouseenter = btnmouseenter
+        utils.gui.Button.OPT.onmouseleave = btnmouseleave
 
         self.uuid = uuid.uuid4().hex
+
+        # for dev purposes
+        self.username = f'dev {self.uuid}'
 
     def resetfonts(self):
         self.uifont.fgcolor = TEXT_FG
