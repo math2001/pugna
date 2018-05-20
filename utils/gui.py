@@ -92,6 +92,9 @@ class GuiElement:
 
         self.updateimg()
 
+    def render(self):
+        self.gui.screen.blit(self.image, self.rect)
+
     def updateimg(self):
         with fontopt(self.gui.fonts[self.opt.font], size=self.opt.size,
                      fgcolor=self.opt.fg) as font:
@@ -107,9 +110,23 @@ class GuiElement:
     def debug(self, color, rect, surf=None):
         pygame.draw.rect(surf or self.gui.screen, Color(color), rect, 1)
 
-
     def copy(self):
         return getattr(self.gui, self.__class__.__name__)(**self.opt)
+
+    def drawborder(self):
+        if self.opt.borderwidth is None:
+            return 0
+
+        borderwidth = (self.opt.borderwidth - self.opt.borderwidth % 2) * -2
+        pygame.draw.rect(self.image, self.opt.bordercolor,
+                         self.rect.inflate(borderwidth, borderwidth),
+                         self.opt.borderwidth)
+        return borderwidth
+
+    def updatefrombounds(self):
+        for attr in self.opt.bounds:
+            setattr(self.rect, attr, self.opt.bounds[attr])
+
 
 class Button(GuiElement):
 
@@ -269,6 +286,64 @@ class MessageBox(GuiElement):
 class ConfirmBox(MessageBox):
     pass
 
+class Input(GuiElement):
+
+    """Just the input element"""
+
+    OPT = Options(
+        width=200,
+        height=40,
+        fg=Color('white'),
+        bordercolor=Color(30, 30, 30),
+        borderwidth=1,
+        size=None,
+        font=None,
+        origin=(10, 10),
+        onsend=None,
+        bounds={},
+        initialtext='',
+        maxlength=0
+    )
+
+    def __init__(self, gui, **opts):
+        self.text = opts.get('initialtext', self.OPT.initialtext)
+        super().__init__(gui, **opts)
+
+    def _updateimg(self, font):
+        self.image = pygame.Surface((self.opt.width, self.opt.height))
+        self.rect = self.image.get_rect()
+
+        self.drawborder()
+
+        font.origin = True
+        o = self.opt.origin[0], self.rect.bottom - self.opt.origin[1]
+
+        font.render_to(self.image, o, self.text)
+
+        self.updatefrombounds()
+
+    async def feed(self, e):
+        if e.type == KEYDOWN:
+            if e.unicode == '\x08':
+                self.text = self.text[:-1]
+            elif e.unicode == '\r':
+                if self.opt.onsend:
+                    await self.opt.onsend(self, e)
+            elif self.opt.maxlength == 0 or len(self.text) < self.opt.maxlength:
+                self.text += e.unicode
+            self.updateimg()
+
+class InputBox(MessageBox):
+
+    OPT = Options(
+        width=350,
+        height=200,
+        fg=Color('white'),
+        bordercolor=Color(30, 30, 30),
+        borderwidth=1
+    )
+
+
 class GUI:
 
     """Feeds and renders active elements
@@ -308,3 +383,9 @@ class GUI:
 
     def ConfirmBox(self, *args, **kwargs):
         return ConfirmBox(self, *args, **kwargs)
+
+    def InputBox(self, **opts):
+        return InputBox(self, **opts)
+
+    def Input(self, **opts):
+        return Input(self, **opts)

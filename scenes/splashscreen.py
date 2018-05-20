@@ -51,4 +51,4 @@ class SplashScreen:
 
     async def on_event(self, e):
         if e.type in (pygame.KEYDOWN, pygame.MOUSEBUTTONDOWN):
-            self.m.schedule(self.m.focus('Menu'))
+            self.m.schedule(self.m.focus('Username'))

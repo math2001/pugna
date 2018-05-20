@@ -68,6 +68,7 @@ class SceneManager:
 
         self.frames_count = 0
 
+        pygame.key.set_repeat(300, 50)
         pygame.display.set_caption(CAPTION)
 
         # load fonts
@@ -90,6 +91,7 @@ class SceneManager:
         self.uuid = uuid.uuid4().hex
 
         # for dev purposes
+        self.dev_username = True
         self.username = f'dev {self.uuid}'
 
     def resetfonts(self):
@@ -173,4 +175,4 @@ class SceneManager:
 
     state = property(getstate, setstate)
 
-SceneManager().run("SplashScreen")
+SceneManager().run("Username")
