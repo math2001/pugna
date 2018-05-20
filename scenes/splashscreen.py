@@ -18,7 +18,7 @@ class SplashScreen:
         self.title_color = pygame.Color(0, 0, 0, 255)
         self.state = 0
 
-    async def render(self):
+    def render(self):
         if self.state >= 1:
             tr = self.m.fancyfont.get_rect(self.TITLE, size=self.TITLE_SIZE)
             tr.center = self.m.rect.center

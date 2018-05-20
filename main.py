@@ -98,6 +98,9 @@ class SceneManager:
         self.dev_username = True
         self.username = f'dev {self.uuid}'
 
+        # used for a common animation after text (blinking dots)
+        self.animdots = 1
+
     def resetfonts(self):
         self.uifont.fgcolor = TEXT_FG
         self.uifont.size = 20
@@ -166,11 +169,15 @@ class SceneManager:
 
             self.screen.fill(pygame.Color('black'))
 
-            await self.scene.render()
+            self.scene.render()
             self.gui.render()
             self.rendercursor()
 
             self.frames_count += 1
+            if self.frames_count % 10 == 0:
+                self.animdots += 1
+                if self.animdots > 3:
+                    self.animdots = 1
 
             # give the hand back to the loop
             await asyncio.sleep(0)
@@ -187,4 +194,4 @@ class SceneManager:
 
     state = property(getstate, setstate)
 
-SceneManager().run("SplashScreen")
+SceneManager().run("HostGame")

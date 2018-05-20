@@ -97,6 +97,18 @@ class HostGame:
             self.requestbox.setopt(msg=f'{res.by} wants to play with you!')
             self.m.gui.activate(self.requestbox)
 
+    def render(self):
+        # render the state
+        self.m.uifont.origin = True
+        srect = self.m.uifont.get_rect(self.m.state)
+        srect.centerx = self.m.rect.centerx
+        # because font.origin = True
+        srect.top = self.m.rect.bottom - 20
+        self.m.uifont.render_to(self.m.screen, srect.topleft, None)
+
+        self.m.uifont.render_to(self.m.screen, (srect.right, srect.top),
+                                '.' * self.m.animdots)
+
     async def on_blur(self, scene):
         self.m.client.shutdown()
         await self.server.shutdown()
