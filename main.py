@@ -120,16 +120,21 @@ class SceneManager:
         task.add_done_callback(handle_task)
         return task
 
+    async def quit(self):
+        if hasattr(self.scene, 'on_blur'):
+            await self.scene.on_blur(self.scene)
+            self.going = False
+
     async def gameloop(self):
         clock = pygame.time.Clock()
 
-        while True:
+        self.going = True
+
+        while self.going:
             for e in pygame.event.get():
                 await self.gui.feed(e)
                 if e.type == pygame.QUIT:
-                    if hasattr(self.scene, 'on_blur'):
-                        await self.scene.on_blur(self.scene)
-                    return
+                    return await self.quit()
 
                 await self.scene.on_event(e)
 
@@ -158,4 +163,4 @@ class SceneManager:
 
     state = property(getstate, setstate)
 
-SceneManager().run("HostGame")
+SceneManager().run("SplashScreen")
