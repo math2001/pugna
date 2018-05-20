@@ -14,19 +14,18 @@ import math
 from constants import *
 
 os.environ['SDL_VIDEO_CENTERED'] = '1'
-logging.basicConfig(level=logging.DEBUG,
-                    filename='logs/app.log',
-                    filemode='w',
-                    format='{levelname:<8} {name:<15} {message}',
-                    style='{')
+format = '{levelname:<8} {name:<15} {message}'
+logging.basicConfig(level=logging.WARNING, style='{',
+                    format=format)
 
-logging.getLogger('asyncio').setLevel(logging.WARNING)
+filehandler = logging.FileHandler('logs/app.log')
+filehandler.setFormatter(logging.Formatter(format, style='{'))
+
+root = logging.getLogger()
+root.addHandler(filehandler)
 
 log = logging.getLogger(__name__)
-
-if DEBUG:
-    # log to the stderr as well
-    logging.getLogger().addHandler(logging.StreamHandler())
+log.setLevel(logging.DEBUG)
 
 # only use absoute imports. The dirname of the current script is always added
 # to sys.path, which I don't want. I just want the root directory of the
