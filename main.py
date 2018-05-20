@@ -110,6 +110,19 @@ class SceneManager:
         self.fancyfont.size = 25
         self.fancyfont.origin = False
 
+    def writetext(self, font, text, **bounds):
+        if font == 'ui':
+            font = self.uifont
+        elif font == 'fancy':
+            font = self.fancyfont
+        rect = font.get_rect(text)
+        for attr in bounds:
+            if isinstance(bounds[attr], str):
+                bounds[attr] = getattr(self.rect, bounds[attr])
+            setattr(rect, attr, bounds[attr])
+        font.render_to(self.screen, rect, None)
+        return rect
+
     async def focus(self, scenename):
         if not hasattr(scenes, scenename):
             raise ValueError(f"No such scene as {scenename!r}")
@@ -156,6 +169,9 @@ class SceneManager:
         self.cursor_position = pygame.mouse.get_pos()
 
         while self.going:
+            # reset fonts everyframe to make sure every frame starts with the
+            # same settings
+            self.resetfonts()
             for e in pygame.event.get():
                 if e.type == pygame.MOUSEMOTION:
                     self.cursor_position = e.pos

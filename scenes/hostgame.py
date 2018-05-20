@@ -1,3 +1,4 @@
+import socket
 import pygame
 import logging
 from server import Server
@@ -36,6 +37,8 @@ class HostGame:
         )
 
     async def on_focus(self):
+        self.localip = socket.gethostbyname(socket.gethostname())
+
         self.m.state = STATE_CREATING
         self.server = Server(self.m.uuid, self.m.loop)
 
@@ -98,16 +101,25 @@ class HostGame:
             self.m.gui.activate(self.requestbox)
 
     def render(self):
+        self.m.fancyfont.size = 80
+        rect = self.m.writetext('fancy', 'Hosting a game', top=20,
+                                centerx='centerx')
+
+        rect = self.m.writetext('ui', 'Your local IP is:', top=rect.bottom + 50,
+                                centerx='centerx')
+
+        self.m.uifont.size = 40
+        rect = self.m.writetext('ui', self.localip, top=rect.bottom + 20,
+                                centerx='centerx')
+
         # render the state
         self.m.uifont.origin = True
-        srect = self.m.uifont.get_rect(self.m.state)
-        srect.centerx = self.m.rect.centerx
-        # because font.origin = True
-        srect.top = self.m.rect.bottom - 20
-        self.m.uifont.render_to(self.m.screen, srect.topleft, None)
+        self.m.uifont.size = 20
+        rect = self.m.writetext('ui', self.m.state, top=self.m.rect.bottom - 20,
+                                centerx='centerx')
 
-        self.m.uifont.render_to(self.m.screen, (srect.right, srect.top),
-                                '.' * self.m.animdots)
+        self.m.writetext('ui', '.' * self.m.animdots, left=rect.right + 2,
+                         top=rect.top)
 
     async def on_blur(self, scene):
         self.m.client.shutdown()
