@@ -11,6 +11,7 @@ import logging
 pygame.freetype.init()
 
 log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
 
 @contextmanager
 def fontopt(font, **opts):
@@ -104,6 +105,8 @@ class GuiElement:
 
         self.gui = gui
 
+        self._states = {}
+
     def render(self):
         self.gui.screen.blit(self.image, self.rect)
 
@@ -146,6 +149,26 @@ class GuiElement:
     def updatefrombounds(self):
         for attr in self.opt.bounds:
             setattr(self.rect, attr, self.opt.bounds[attr])
+
+    def savestate(self, name, **useropts):
+        """Save the options under a name for easy use.
+
+        The options will be the current options overwritten by the useropts.
+        """
+        # TODO: use this for perfs improvement
+        if name in self._states:
+            raise ValueError(f"The state {name!r} already exists.")
+        opts = self.opt.copy()
+        opts.update(useropts)
+        self._states[name] = opts
+        return self
+
+    def applystate(self, name):
+        """Re-apply the options from a name"""
+        if name not in self._states:
+            raise ValueError(f"The state {name!r} does not exists")
+        self.setopt(**self._states[name])
+        return self
 
 
 class Button(GuiElement):
@@ -206,7 +229,7 @@ class Button(GuiElement):
             and self.rect.collidepoint(e.pos) and not e.captured:
             e.captured = True
             await self.opt.onclick(self, e)
-            log.debug(f'Clicked on {self}')
+            log.debug(f'Triggered {self}.onevent')
         elif e.type == MOUSEMOTION:
             if not e.captured and self.rect.collidepoint(e.pos):
                 e.captured = True
@@ -482,16 +505,16 @@ class GUI:
                 pass
 
     def Button(self, *args, **kwargs):
-        return Button(self, *args, **kwargs).updateimg()
+        return Button(self, *args, **kwargs).updateimg().savestate('normal')
 
     def MessageBox(self, *args, **kwargs):
-        return MessageBox(self, *args, **kwargs).updateimg()
+        return MessageBox(self, *args, **kwargs).updateimg().savestate('normal')
 
     def ConfirmBox(self, *args, **kwargs):
-        return ConfirmBox(self, *args, **kwargs).updateimg()
+        return ConfirmBox(self, *args, **kwargs).updateimg().savestate('normal')
 
     def InputBox(self, **opts):
-        return InputBox(self, **opts).updateimg()
+        return InputBox(self, **opts).updateimg().savestate('normal')
 
     def Input(self, **opts):
-        return Input(self, **opts).updateimg()
+        return Input(self, **opts).updateimg().savestate('normal')
