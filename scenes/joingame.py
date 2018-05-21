@@ -1,5 +1,6 @@
 import logging
 import pygame
+from constants import *
 from utils.client import Client, Response
 from constants import *
 
@@ -25,6 +26,10 @@ class JoinGame:
                                     top=self.input.rect.bottom + 10,
                                     onclick=self.onsend)
 
+        self.ok.savestate('disabled', fg=TEXT_DISABLED_FG, onmouseenter=None,
+                          onmouseleave=None, text='Sending request...',
+                          onclick=None)
+
         ok = self.m.gui.Button(text='Oh! Ok...')
         self.messagebox = self.m.gui.MessageBox(center=self.m.rect.center,
                                                 ok=ok, onsend=self.onmsgboxsend,
@@ -46,15 +51,16 @@ class JoinGame:
         self.m.gui.activate(self.messagebox)
 
     async def onsend(self, element, e):
-        # TODO: disable the button send
         self.m.state = STATE_OPENING_CO
         self.task = self.m.schedule(Client.new(self.input.text, PORT))
+        self.ok.applystate('disabled')
 
     async def onmsgboxsend(self, element, e):
         """We have displayed an error and the user clicked 'ok' """
         self.m.state = STATE_INPUT
         self.task = None
         self.m.gui.deactivate(self.messagebox)
+        self.ok.applystate('normal')
 
     async def update(self):
         if self.task is None or not self.task.done():
