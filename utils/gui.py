@@ -180,7 +180,7 @@ class Button(GuiElement):
         height=None,
         paddingx=10,
         paddingy=20,
-        onclick=None,
+        onsend=None,
         onmouseleave=None,
         onmouseenter=None,
         text=None,
@@ -225,10 +225,10 @@ class Button(GuiElement):
             setattr(self.rect, attr, self.opt.bounds[attr])
 
     async def feed(self, e):
-        if self.opt.onclick and e.type == MOUSEBUTTONDOWN \
+        if self.opt.onsend and e.type == MOUSEBUTTONDOWN \
             and self.rect.collidepoint(e.pos) and not e.captured:
             e.captured = True
-            await self.opt.onclick(self, e)
+            await self.opt.onsend(self, e)
             log.debug(f'Triggered {self}.onevent')
         elif e.type == MOUSEMOTION:
             if not e.captured and self.rect.collidepoint(e.pos):
@@ -270,11 +270,11 @@ class MessageBox(GuiElement):
             raise TypeError("opt.ok should be of type Button, got "
                             f"{self.opt.ok.__class__.__name__}")
 
-        if self.opt.ok.opt.onclick is not None:
-            raise ValueError("Button shouldn't have onclick event defined, "
-                             f"got {self.opt.ok.opt.onclick}")
+        if self.opt.ok.opt.onsend is not None:
+            raise ValueError("Button shouldn't have onsend event defined, "
+                             f"got {self.opt.ok.opt.onsend}")
 
-        self.opt.ok.opt.onclick = self.opt.onsend
+        self.opt.ok.opt.onsend = self.opt.onsend
 
     async def feed(self, e):
         await self.opt.ok.feed(e)
@@ -330,12 +330,12 @@ class ConfirmBox(MessageBox):
             raise TypeError("opt.cancle should be of type Button, got "
                             f"{self.opt.cancel.__class__.__name__}")
 
-        if self.opt.cancel.opt.onclick is not None:
-            raise ValueError("Button shouldn't have onclick event defined, "
-                             f"got {self.opt.cancel.opt.onclick}")
+        if self.opt.cancel.opt.onsend is not None:
+            raise ValueError("Button shouldn't have onsend event defined, "
+                             f"got {self.opt.cancel.opt.onsend}")
 
-        self.opt.cancel.opt.onclick = self.onsend
-        self.opt.ok.opt.onclick = self.onsend
+        self.opt.cancel.opt.onsend = self.onsend
+        self.opt.ok.opt.onsend = self.onsend
 
     async def onsend(self, btn, e):
         ok = btn is self.opt.ok
@@ -431,11 +431,11 @@ class InputBox(GuiElement):
             raise TypeError("Expected 'ok' to be of type 'Button', got"
                              f"{self.opt.ok.__class__.__name__!r}")
 
-        if self.opt.ok.opt.onclick is not None:
-            raise ValueError("Button shouldn't have an onclick listener already")
+        if self.opt.ok.opt.onsend is not None:
+            raise ValueError("Button shouldn't have an onsend listener already")
 
         self.opt.input.opt.onsend = self.opt.onsend
-        self.opt.ok.opt.onclick = self.opt.onsend
+        self.opt.ok.opt.onsend = self.opt.onsend
 
     def _updateimg(self, font):
         self.image = pygame.Surface((self.opt.width, self.opt.height))

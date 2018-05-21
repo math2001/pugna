@@ -9,7 +9,7 @@ class Menu:
 
         self.btns = []
         for txt in ['host game', 'join game', 'about', 'quit']:
-            btn = self.m.gui.Button(text=txt, onclick=self.btnclick,
+            btn = self.m.gui.Button(text=txt, onsend=self.btnclick,
                                     onmouseenter=self.btnmouseenter,
                                     onmouseleave=self.btnmouseleave,
                                     font='fancy', paddingy=40, width=300,

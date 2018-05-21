@@ -24,11 +24,11 @@ class JoinGame:
         self.ok = self.m.gui.Button(text='Send request',
                                     centerx=self.input.rect.centerx,
                                     top=self.input.rect.bottom + 10,
-                                    onclick=self.onsend)
+                                    onsend=self.onsend)
 
         self.ok.savestate('disabled', fg=TEXT_DISABLED_FG, onmouseenter=None,
                           onmouseleave=None, text='Sending request...',
-                          onclick=None)
+                          onsend=None)
 
         ok = self.m.gui.Button(text='Oh! Ok...')
         self.messagebox = self.m.gui.MessageBox(center=self.m.rect.center,
