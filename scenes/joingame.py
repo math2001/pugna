@@ -22,24 +22,24 @@ class JoinGame:
 
         iwidth = self.input.rect.width
 
-        self.ok = self.m.gui.Button(text='Send request',
+        self.send = self.m.gui.Button(text='Send request',
                                     centerx=self.input.rect.centerx,
                                     top=self.input.rect.bottom + 10,
                                     onsend=self.onsend)
 
-        kwidth = self.ok.rect.width
+        kwidth = self.send.rect.width
 
         width = iwidth + kwidth + 10
         top = 100
 
         self.input.setbounds(left=self.m.rect.centerx - width / 2,
                              top=top)
-        self.ok.setbounds(left=self.input.rect.right + 10,
+        self.send.setbounds(left=self.input.rect.right + 10,
                           top=top)
-        self.ok.savestate('disabled', fg=TEXT_DISABLED_FG, onmouseenter=None,
+        self.send.savestate('disabled', fg=TEXT_DISABLED_FG, onmouseenter=None,
                           onmouseleave=None, text='Sending request...',
                           onsend=None)
-        self.ok.savestate('normal')
+        self.send.savestate('normal')
 
         ok = self.m.gui.Button(text='Oh! Ok...')
         self.messagebox = self.m.gui.MessageBox(center=self.m.rect.center,
@@ -50,10 +50,10 @@ class JoinGame:
 
     async def on_focus(self):
         self.m.state = STATE_INPUT
-        self.m.gui.activate(self.input, self.ok)
+        self.m.gui.activate(self.input, self.send)
 
     async def on_blur(self, scene):
-        self.m.gui.deactivate(self.input, self.ok)
+        self.m.gui.deactivate(self.input, self.send)
 
     def handle_exception(self, response):
         self.messagebox.setopt(msg=response.msg,
@@ -64,14 +64,14 @@ class JoinGame:
     async def onsend(self, element, e):
         self.m.state = STATE_OPENING_CO
         self.task = self.m.schedule(Client.new(self.input.text, PORT))
-        self.ok.applystate('disabled')
+        self.send.applystate('disabled')
 
     async def onmsgboxsend(self, element, e):
         """We have displayed an error and the user clicked 'ok' """
         self.m.state = STATE_INPUT
         self.task = None
         self.m.gui.deactivate(self.messagebox)
-        self.ok.applystate('normal')
+        self.send.applystate('normal')
 
     async def update(self):
         if self.task is None or not self.task.done():

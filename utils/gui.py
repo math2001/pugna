@@ -229,15 +229,17 @@ class Button(GuiElement):
             and self.rect.collidepoint(e.pos) and not e.captured:
             e.captured = True
             await self.opt.onsend(self, e)
-            log.debug(f'Triggered {self}.onevent')
+            log.debug(f'Trigger {self}.onsend')
         elif e.type == MOUSEMOTION:
             if not e.captured and self.rect.collidepoint(e.pos):
                 e.captured = True
                 if not self.hovered and self.opt.onmouseenter:
+                    log.debug(f'Trigger {self}.onmouseenter')
                     await self.opt.onmouseenter(self, e)
                 self.hovered = True
             else:
                 if self.hovered and self.opt.onmouseleave:
+                    log.debug(f'Trigger {self}.onmouseleave')
                     await self.opt.onmouseleave(self, e)
                 self.hovered = False
 

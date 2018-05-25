@@ -163,7 +163,9 @@ class SceneManager:
         return task
 
     async def quit(self):
+        log.info('Quiting...')
         if hasattr(self.scene, 'on_blur'):
+            log.debug(f'Triggering on_blur of {self.scene.__class__.__name__}')
             await self.scene.on_blur(self.scene)
             self.going = False
 
@@ -213,6 +215,8 @@ class SceneManager:
             if DEBUG:
                 pygame.display.set_caption(f"{CAPTION} v{VERSION} | "
                                            f"{round(clock.get_fps())}")
+
+        log.debug('Main loop stopped')
 
     def run(self, scenename):
         self.loop.run_until_complete(self.focus(scenename))
