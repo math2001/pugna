@@ -18,17 +18,28 @@ class JoinGame:
         self.m = m
 
         self.input = self.m.gui.Input(initialtext='192.168.1.',
-                                      centerx=self.m.rect.centerx,
-                                      top=100, onsend=self.onsend)
+                                      onsend=self.onsend)
+
+        iwidth = self.input.rect.width
 
         self.ok = self.m.gui.Button(text='Send request',
                                     centerx=self.input.rect.centerx,
                                     top=self.input.rect.bottom + 10,
                                     onsend=self.onsend)
 
+        kwidth = self.ok.rect.width
+
+        width = iwidth + kwidth + 10
+        top = 100
+
+        self.input.setbounds(left=self.m.rect.centerx - width / 2,
+                             top=top)
+        self.ok.setbounds(left=self.input.rect.right + 10,
+                          top=top)
         self.ok.savestate('disabled', fg=TEXT_DISABLED_FG, onmouseenter=None,
                           onmouseleave=None, text='Sending request...',
                           onsend=None)
+        self.ok.savestate('normal')
 
         ok = self.m.gui.Button(text='Oh! Ok...')
         self.messagebox = self.m.gui.MessageBox(center=self.m.rect.center,

@@ -37,6 +37,8 @@ class HostGame:
             width=400, height=240
         )
 
+        asdfasdfasdfasdf
+
     async def on_focus(self):
         self.localip = socket.gethostbyname(socket.gethostname())
 

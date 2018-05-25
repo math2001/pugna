@@ -220,4 +220,4 @@ class SceneManager:
 
     state = property(getstate, setstate)
 
-SceneManager().run("JoinGame")
+SceneManager().run("SplashScreen")

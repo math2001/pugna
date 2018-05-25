@@ -505,16 +505,16 @@ class GUI:
                 pass
 
     def Button(self, *args, **kwargs):
-        return Button(self, *args, **kwargs).updateimg().savestate('normal')
+        return Button(self, *args, **kwargs).updateimg()
 
     def MessageBox(self, *args, **kwargs):
-        return MessageBox(self, *args, **kwargs).updateimg().savestate('normal')
+        return MessageBox(self, *args, **kwargs).updateimg()
 
     def ConfirmBox(self, *args, **kwargs):
-        return ConfirmBox(self, *args, **kwargs).updateimg().savestate('normal')
+        return ConfirmBox(self, *args, **kwargs).updateimg()
 
     def InputBox(self, **opts):
-        return InputBox(self, **opts).updateimg().savestate('normal')
+        return InputBox(self, **opts).updateimg()
 
     def Input(self, **opts):
-        return Input(self, **opts).updateimg().savestate('normal')
+        return Input(self, **opts).updateimg()
