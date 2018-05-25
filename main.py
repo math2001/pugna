@@ -155,12 +155,12 @@ class SceneManager:
             await scene.on_focus()
 
     def schedule(self, coro):
-       """A simple wrapper do simplify a scene's code
+        """A simple wrapper do simplify a scene's code
 
-       It logs any error that occurs"""
-       task = self.loop.create_task(coro)
-       task.add_done_callback(handle_task)
-       return task
+        It logs any error that occurs"""
+        task = self.loop.create_task(coro)
+        task.add_done_callback(handle_task)
+        return task
 
     async def quit(self):
         if hasattr(self.scene, 'on_blur'):
