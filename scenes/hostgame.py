@@ -37,7 +37,6 @@ class HostGame:
             width=400, height=240
         )
 
-
     async def on_focus(self):
         self.localip = socket.gethostbyname(socket.gethostname())
 
@@ -56,11 +55,13 @@ class HostGame:
 
     async def requestsend(self, ok, element, event):
         if ok:
-            self.task = self.m.client.accept_request()
-            self.state = STATE_WAITING_SERVER
+            self.m.state = STATE_WAITING_SERVER
+            await self.m.client.accept_request()
+            self.task = self.m.schedule(self.m.client.get_champions())
         else:
-            self.state = STATE_WAITING_PLAYER
-            self.task = self.m.client.refuse_request()
+            self.m.state = STATE_WAITING_PLAYER
+            await self.m.client.refuse_request()
+            self.task = self.m.schedule(self.m.client.findplayer())
 
     async def onmessageok(self, element, e):
         """Called when the message popup ok btn has been clicked"""
@@ -93,6 +94,10 @@ class HostGame:
             self.m.state = STATE_WAITING_INPUT
             self.requestbox.setopt(msg=f'{res.by} wants to play with you!')
             self.m.gui.activate(self.requestbox)
+
+        elif self.m.state == STATE_WAITING_SERVER:
+            champions = res.
+
 
     def render(self):
         self.m.fancyfont.size = TITLE_SIZE

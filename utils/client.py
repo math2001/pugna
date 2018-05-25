@@ -68,9 +68,11 @@ class Client:
     async def refuse_request(self):
         await self.co.write(kind='request state change', state='refused',
                             reason='owner refused')
+        return Response()
 
     async def accept_request(self):
         await self.co.write(kind='request state change', state='accepted')
+        return Response()
 
     def shutdown(self):
         """Because this is based on Connection.close(), the same problem

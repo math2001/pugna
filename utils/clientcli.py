@@ -15,16 +15,24 @@ async def nr():
             + UUID + '"}\n'
     w.write(json.encode('utf-8'))
     await w.drain()
-    print((await r.readline()).decode('utf-8'))
+    print((await r.readline()).decode('utf-8').strip())
+    print("Awaiting owner response")
+    print((await r.readline()).decode('utf-8').strip())
 
 async def leave():
     print("Connect and quit")
     r, w = await asyncio.open_connection('localhost', 9877)
     w.close()
 
+def _done(fut):
+    if fut.exception():
+        fut.result()
+    print(f"Future done: {fut.result()!r}")
+
 loop = asyncio.get_event_loop()
 task = None
-loop.create_task(locals()[sys.argv[1]]())
+task = loop.create_task(locals()[sys.argv[1]]())
+task.add_done_callback(_done)
 try:
     loop.run_forever()
 except KeyboardInterrupt:

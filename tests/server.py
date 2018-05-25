@@ -132,7 +132,6 @@ class TestServer(Aut):
         self.assertEqual(res, {'kind': 'identification state change',
                                'state': 'accepted'})
 
-
     async def test_more_client(self):
         """Send an other request when there is already a owner and an other"""
 
