@@ -73,3 +73,22 @@ class TestClient(Aut):
         req = await task
         self.assertEqual(req.by, 'somekid')
 
+    async def test_refuse_request(self):
+        server = self.clients[0]
+
+        task = self.loop.create_task(self.client.refuse_request())
+
+        req = await server.read()
+        self.assertEqual(req, {'kind': 'request state change',
+                               'state': 'refused',
+                               'reason': 'owner refused'})
+
+    async def test_accept_request(self):
+        server = self.clients[0]
+
+        task = self.loop.create_task(self.client.accept_request())
+
+        req = await server.read()
+        self.assertEqual(req, {'kind': 'request state change',
+                               'state': 'accepted'})
+

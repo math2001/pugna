@@ -212,6 +212,7 @@ class Server:
         if self.state not in (STATE_WAITING_REQUEST_REPLY, ):
             return
         res = self.owner.co.aread()
+
         if not res:
             return
         if res['kind'] != 'request state change':

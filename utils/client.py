@@ -29,7 +29,7 @@ class Response:
 
 class Client:
 
-    """An API to communicate with the server"""
+    """A stateless API to communicate with the server"""
 
     @classmethod
     @handle_exception
@@ -64,6 +64,13 @@ class Client:
             return Response(error=True,
                             msg=f"Invalid request kind: {res['kind']!r}")
         return Response(by=res['by'])
+
+    async def refuse_request(self):
+        await self.co.write(kind='request state change', state='refused',
+                            reason='owner refused')
+
+    async def accept_request(self):
+        await self.co.write(kind='request state change', state='accepted')
 
     def shutdown(self):
         """Because this is based on Connection.close(), the same problem
