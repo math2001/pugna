@@ -17,6 +17,9 @@ STATE_GAME = "Game"
 STATE_CLOSING = 'Closing'
 STATE_CLOSED = 'Closed'
 
+# temp
+HEROS = ['Adrian']
+
 def handle_exception(fut):
     try:
         exc = fut.exception()
@@ -222,8 +225,7 @@ class Server:
             await self.other.co.write(kind='request state change',
                                       state='accepted')
             self.state = STATE_HERO_SELECTION
-            await self.broadcast(kind='select hero', heros={
-                'cool name': 'cool story'})
+            await self.broadcast(kind='select hero', names=HEROS)
 
         elif res['state'] == 'refused':
             # send refused and close

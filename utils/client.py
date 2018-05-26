@@ -65,14 +65,21 @@ class Client:
                             msg=f"Invalid request kind: {res['kind']!r}")
         return Response(by=res['by'])
 
+    @handle_exception
     async def refuse_request(self):
         await self.co.write(kind='request state change', state='refused',
                             reason='owner refused')
         return Response()
 
+    @handle_exception
     async def accept_request(self):
         await self.co.write(kind='request state change', state='accepted')
         return Response()
+
+    @handle_exception
+    async def get_heros_names(self):
+        res = await self.co.read('names', kind='select hero')
+        return Response(names=res.names)
 
     def shutdown(self):
         """Because this is based on Connection.close(), the same problem

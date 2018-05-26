@@ -13,6 +13,18 @@ pygame.freetype.init()
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
+class Options(dict):
+
+    def __getattr__(self, attr):
+        try:
+            return self[attr]
+        except KeyError:
+            pass
+        raise AttributeError(f"No attribute {attr!r}")
+
+    def __setattr__(self, attr, value):
+        self[attr] = value
+
 @contextmanager
 def fontopt(font, **opts):
     previous = {}
@@ -25,7 +37,7 @@ def fontopt(font, **opts):
     for key, value in previous.items():
         setattr(font, key, value)
 
-def word_wrap(surf, font, text, opt):
+def word_wrap(surf, font, text, opt=Options(fg=None)):
     """Stolen from the pygame documentation freetype.Font.render_to
     I tweaked it a bit to support \n
     """
@@ -51,18 +63,6 @@ def word_wrap(surf, font, text, opt):
         x, y = 0, y + line_spacing
     font.origin = origin
     return x, y
-
-class Options(dict):
-
-    def __getattr__(self, attr):
-        try:
-            return self[attr]
-        except KeyError:
-            pass
-        raise AttributeError(f"No attribute {attr!r}")
-
-    def __setattr__(self, attr, value):
-        self[attr] = value
 
 _rect_attrs = ('x', 'y', 'top', 'left', 'bottom', 'right', 'topleft',
                'bottomleft', 'topright', 'bottomright', 'midtop', 'midleft',

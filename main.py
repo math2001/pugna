@@ -224,4 +224,4 @@ class SceneManager:
 
     state = property(getstate, setstate)
 
-SceneManager().run("SplashScreen")
+SceneManager().run("SelectHero")

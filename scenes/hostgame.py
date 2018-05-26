@@ -57,7 +57,7 @@ class HostGame:
         if ok:
             self.m.state = STATE_WAITING_SERVER
             await self.m.client.accept_request()
-            self.task = self.m.schedule(self.m.client.get_champions())
+            sel.m.focus('SelectHero')
         else:
             self.m.state = STATE_WAITING_PLAYER
             await self.m.client.refuse_request()
@@ -94,10 +94,6 @@ class HostGame:
             self.m.state = STATE_WAITING_INPUT
             self.requestbox.setopt(msg=f'{res.by} wants to play with you!')
             self.m.gui.activate(self.requestbox)
-
-        elif self.m.state == STATE_WAITING_SERVER:
-            champions = res.
-
 
     def render(self):
         self.m.fancyfont.size = TITLE_SIZE
